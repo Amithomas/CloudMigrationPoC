@@ -24,9 +24,9 @@ def intitate_data_flow(data, context):
             "zone": "us-central1-f",
             "tempLocation": tmpLocation
           },
-          resource: {
-         parameters: {
-           inputFile: fileLoc,
+          "resource": {
+         "parameters": {
+           "inputFile": fileLoc,
          },
           "jobName": jobName
         }
