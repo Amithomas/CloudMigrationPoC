@@ -24,13 +24,12 @@ def intitate_data_flow(data, context):
             "zone": "us-central1-f",
             "tempLocation": tmpLocation
           },
-          "resource": {
          "parameters": {
            "inputFile": fileLoc,
          },
           "jobName": jobName
         }
-  }
+  
 	request = dataflow.projects().templates().launch(
         projectId=project,
         body= request_body,
