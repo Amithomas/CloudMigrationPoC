@@ -5,7 +5,9 @@ import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
+import org.apache.beam.sdk.options.Validation;
 import org.apache.beam.sdk.options.Validation.Required;
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.io.TextIO;
@@ -50,7 +52,11 @@ public class CloudSqlImport  {
 
   
 
-  public interface BikeTripOptions  extends PipelineOptions  {
+  public interface TransformOptions  extends PipelineOptions  {
+	  @Description("Path of the file to read from")
+	  @Validation.Required
+	  String getInputFile();
+	  void setInputFile(String value);
 
   }
   
@@ -71,11 +77,12 @@ public class CloudSqlImport  {
   }
 
   public static void main(String[] args) {
-	  String sourceFilePath = "gs://triggerbucket-1/Sample.txt";
+	  //String sourceFilePath = "gs://triggerbucket-1/Sample.txt";
  
-BikeTripOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(BikeTripOptions.class);      
+	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
-  		   
+  String sourceFilePath = options.getInputFile();
+  LOG.info(sourceFilePath);
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFilePath));
   PCollection<ArrayList<String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, ArrayList<String>>() {
 	  private static final long serialVersionUID = 1L;
