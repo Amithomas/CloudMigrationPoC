@@ -1,49 +1,33 @@
 package com.click.example;
 
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.coders.StringUtf8Coder;
+
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.Validation;
-import org.apache.beam.sdk.options.Validation.Required;
-import org.apache.beam.sdk.options.ValueProvider;
-import org.apache.beam.sdk.values.KV;
+
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.io.TextIO;
-import org.apache.beam.sdk.io.gcp.bigquery.BigQueryIO;
-import org.apache.beam.sdk.testing.TestPipeline;
-import com.google.api.services.bigquery.model.TableRow;
-import com.google.api.services.storage.Storage;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.StorageOptions;
-
-import org.apache.beam.sdk.coders.*;
 
 
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.transforms.Create;
+
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 
-import java.io.IOException;
+
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 import org.slf4j.Logger;
-import org.json.JSONArray; 
-import org.json.JSONObject; 
-//import org.json.simple.parser.*; 
+
+
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.LoggerFactory;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 
 public class CloudSqlImport  {
 	 
