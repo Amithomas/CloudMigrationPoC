@@ -30,6 +30,7 @@ def intitate_data_flow(data, context):
          },
           "jobName": jobName
         }
+  }
 	request = dataflow.projects().templates().launch(
         projectId=project,
         body= request_body,
