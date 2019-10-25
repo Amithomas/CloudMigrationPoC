@@ -43,10 +43,10 @@ import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
-public class BikeTrip  {
+public class CloudSqlImport  {
 	 
 
-	private static final Logger LOG = LoggerFactory.getLogger(BikeTrip.class);
+	private static final Logger LOG = LoggerFactory.getLogger(CloudSqlImport.class);
 
   
 
@@ -55,7 +55,7 @@ public class BikeTrip  {
   }
   
   
-  static class BikeTripStatementSetter implements JdbcIO.PreparedStatementSetter<ArrayList<String>>
+  static class StatementSetter implements JdbcIO.PreparedStatementSetter<ArrayList<String>>
   {
     private static final long serialVersionUID = 1L;
 
@@ -100,7 +100,7 @@ BikeTripOptions options = PipelineOptionsFactory.fromArgs(args).withValidation()
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
                   )
           .withStatement("insert into customer_details values(?,?,?,?,?)")
-              .withPreparedStatementSetter(new BikeTripStatementSetter()));
+              .withPreparedStatementSetter(new StatementSetter()));
     p.run().waitUntilFinish();
   }
 
