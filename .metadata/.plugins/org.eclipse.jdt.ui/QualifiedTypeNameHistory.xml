@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+    <fullyQualifiedTypeName name="sun.security.util.ArrayUtil"/>
+    <fullyQualifiedTypeName name="java.util.ArrayList"/>
+    <fullyQualifiedTypeName name="java.util.stream.Collectors"/>
+    <fullyQualifiedTypeName name="java.io.Serializable"/>
+    <fullyQualifiedTypeName name="org.apache.beam.sdk.coders.StringUtf8Coder"/>
+    <fullyQualifiedTypeName name="org.apache.beam.model.pipeline.v1.RunnerApi.Coder"/>
+    <fullyQualifiedTypeName name="org.apache.beam.repackaged.beam_runners_direct_java.model.pipeline.v1.RunnerApi.Coder"/>
+    <fullyQualifiedTypeName name="org.apache.beam.repackaged.beam_runners_direct_java.sdk.fn.windowing.EncodedBoundedWindow.Coder"/>
+    <fullyQualifiedTypeName name="org.codehaus.jackson.map.ObjectMapper"/>
+    <fullyQualifiedTypeName name="com.google.api.services.storage.Storage"/>
+    <fullyQualifiedTypeName name="com.google.cloud.storage.StorageOptions"/>
+    <fullyQualifiedTypeName name="com.google.cloud.storage.Blob"/>
+    <fullyQualifiedTypeName name="org.json.simple.JSONArray"/>
+    <fullyQualifiedTypeName name="org.json.simple.parser.JSONParser"/>
+    <fullyQualifiedTypeName name="com.google.cloud.ReadChannel"/>
+    <fullyQualifiedTypeName name="java.io.InputStream"/>
+    <fullyQualifiedTypeName name="com.google.api.services.storage.Storage.Channels"/>
+    <fullyQualifiedTypeName name="jdk.nio.Channels"/>
+    <fullyQualifiedTypeName name="java.nio.channels.Channels"/>
+    <fullyQualifiedTypeName name="com.google.gson.stream.JsonReader"/>
+    <fullyQualifiedTypeName name="java.io.Reader"/>
+    <fullyQualifiedTypeName name="java.io.InputStreamReader"/>
+</qualifiedTypeNameHistroy>
