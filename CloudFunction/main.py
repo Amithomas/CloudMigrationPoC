@@ -25,7 +25,7 @@ def intitate_data_flow(data, context):
             "tempLocation": tmpLocation
           },
          "parameters": {
-           "inputFile": fileLoc,
+           "inputFile": jobName,
          },
           "jobName": jobName
         }
