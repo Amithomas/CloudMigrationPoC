@@ -78,8 +78,7 @@ public class CloudSqlImport  {
   } catch (SQLException e) {
 	e.printStackTrace();
 }
-  
- String column=rs.getString("COLUMN_NAME") ;
+
   
   
   
