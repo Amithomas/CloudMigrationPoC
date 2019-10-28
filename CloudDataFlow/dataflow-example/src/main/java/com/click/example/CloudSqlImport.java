@@ -79,7 +79,10 @@ public class CloudSqlImport  {
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
   String sourceFile=options.getInputFile();
-  String sourceFilePath = sourceBucket+sourceFile;
+  String sourceFilePath= null;
+  if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
+	  sourceFilePath = sourceBucket+sourceFile;
+  }
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   try (Connection con = DriverManager.getConnection(url)){
 	  DatabaseMetaData meta = con.getMetaData(); 
