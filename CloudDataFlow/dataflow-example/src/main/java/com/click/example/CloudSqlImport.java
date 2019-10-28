@@ -64,12 +64,13 @@ public class CloudSqlImport  {
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    	map=element;
+    	map.putAll(element);
     	int count=1;
     	Object[] keyValues=map.keySet().toArray();
     	for(String key:insideKeys) {
     		LOG.info(keyValues[count-1].toString());
-      query.setString(count, element.get(key.replaceAll("_", "")));
+    		LOG.info(key.replaceAll("_", ""));
+      query.setString(count, map.get(key.replaceAll("_", "")));
       count++;
     	}
     	LOG.info(query.toString());
