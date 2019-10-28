@@ -47,7 +47,7 @@ public class CloudSqlImport  {
 	
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
-	  @Default.String("gs://triggerbucket-1/customer_details.txt")
+	  @Default.String("customer_details.txt")
 	  String getInputFile();
 	  void setInputFile(String value);
 

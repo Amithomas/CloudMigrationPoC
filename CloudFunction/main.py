@@ -35,6 +35,7 @@ def intitate_data_flow(data, context):
         body= request_body,
         gcsPath = templatePath
 	)
+  @retry(stop=stop_after_attempt(3), wait=wait_random(min=1, max=2))
 	response = request.execute()
 
 	pprint(response)
