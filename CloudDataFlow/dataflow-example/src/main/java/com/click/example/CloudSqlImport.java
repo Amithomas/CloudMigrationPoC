@@ -79,6 +79,7 @@ public class CloudSqlImport  {
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
   String sourceFile=options.getInputFile();
+  sourceFile.trim();
   String sourceFilePath= null;
   if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
 	  sourceFilePath = sourceBucket+sourceFile;
