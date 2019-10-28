@@ -74,7 +74,7 @@ public class CloudSqlImport  {
   }
 
   public static void main(String[] args) throws SQLException {
-	  String sourceBucket = "gs://triggerbucket-1/";
+	  String sourceBucket = null;
 	  List<String> keyList= new ArrayList<String>();
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
