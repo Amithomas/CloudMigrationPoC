@@ -47,7 +47,6 @@ public class CloudSqlImport  {
 	
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
-	  @Default.String("gs://dataflow-samples/shakespeare/kinglear.txt")
 	  String getInputFile();
 	  void setInputFile(String value);
 
