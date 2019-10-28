@@ -63,6 +63,8 @@ public class CloudSqlImport  {
     }
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {
+    	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    	map=element;
     	int count=1;
     	for(String key:insideKeys) {
       
@@ -106,9 +108,9 @@ public class CloudSqlImport  {
 	  String object= c.element();
 	  JSONParser parser = new JSONParser();
 	  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
-	  Map<String, Object> nodeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+	  Map<String, Object> nodeMap = new HashMap<String, Object>();
 	  ObjectMapper mapper = new ObjectMapper();
-	  nodeMap=mapper.readValue(object, TreeMap.class);
+	  nodeMap=mapper.readValue(object, HashMap.class);
 	  Map<String,String> newMap = nodeMap.entrySet().stream()
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 					/*
