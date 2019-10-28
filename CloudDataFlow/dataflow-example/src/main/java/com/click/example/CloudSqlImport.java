@@ -53,16 +53,16 @@ public class CloudSqlImport  {
   }
   
   
-  static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,String>>
+  static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,Object>>
   {
     private static final long serialVersionUID = 1L;
 
-    public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
+    public void setParameters(Map<String,Object> element, PreparedStatement query) throws Exception
     {
     	int count=1;
     	while(rs.next()) {
       
-      query.setString(count, element.get(rs.getNString("COLUMN_NAME")));
+      query.setString(count, element.get(rs.getNString("COLUMN_NAME")).toString());
       count++;
     	}
     	LOG.info(query.toString());
@@ -90,14 +90,14 @@ public class CloudSqlImport  {
   
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFilePath));
-  PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
+  PCollection<Map<String,Object>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,Object>>() {
 	  private static final long serialVersionUID = 1L;
       @ProcessElement
       public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
     	  String object= c.element();
     	  JSONParser parser = new JSONParser();
     	  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
-    	  Map<String, String> nodeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    	  Map<String, Object> nodeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	  ObjectMapper mapper = new ObjectMapper();
     	  nodeMap=mapper.readValue(object, TreeMap.class);
 						/*
@@ -109,7 +109,7 @@ public class CloudSqlImport  {
       }
   }));
   
-  values.apply(JdbcIO.<Map<String,String>>write()
+  values.apply(JdbcIO.<Map<String,Object>>write()
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
