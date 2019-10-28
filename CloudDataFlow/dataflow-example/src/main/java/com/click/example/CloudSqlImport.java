@@ -38,12 +38,14 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class CloudSqlImport  {
-	 
+	ResultSet rs; 
 
 	private static final Logger LOG = LoggerFactory.getLogger(CloudSqlImport.class);
 
-	static ResultSet rs=null;
-
+	
+	
+		
+	
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
 	  @Validation.Required
@@ -55,14 +57,17 @@ public class CloudSqlImport  {
   
   static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,String>>
   {
+	  CloudSqlImport insideCSI;
     private static final long serialVersionUID = 1L;
-
+    StatementSetter(CloudSqlImport csi){
+    	insideCSI=csi;
+    }
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {
     	int count=1;
-    	while(rs.next()) {
+    	while(insideCSI.rs.next()) {
       
-      query.setString(count, element.get(rs.getNString("COLUMN_NAME")).toString());
+      query.setString(count, element.get(insideCSI.rs.getNString("COLUMN_NAME")).toString());
       count++;
     	}
     	LOG.info(query.toString());
@@ -71,7 +76,7 @@ public class CloudSqlImport  {
 
   public static void main(String[] args) throws SQLException {
 	  String sourceBucket = "gs://triggerbucket-1/";
- 
+	  CloudSqlImport csi = new CloudSqlImport();
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
   String sourceFile=options.getInputFile();
@@ -81,12 +86,12 @@ public class CloudSqlImport  {
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   try (Connection con = DriverManager.getConnection(url)){
 	  DatabaseMetaData meta = con.getMetaData(); 
-	  rs = meta.getColumns(null,null,sourceFile.split("\\.")[0],null);
+	  csi.rs = meta.getColumns(null,null,sourceFile.split("\\.")[0],null);
   } catch (SQLException e) {
 	e.printStackTrace();
 }
 
-  
+
   
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFilePath));
@@ -116,7 +121,7 @@ public class CloudSqlImport  {
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
   .withStatement("insert into customer_details values(?,?,?,?,?)")
-              .withPreparedStatementSetter(new StatementSetter()));
+              .withPreparedStatementSetter(new StatementSetter(csi)));
     p.run().waitUntilFinish();
   }
 
