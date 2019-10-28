@@ -47,7 +47,7 @@ public class CloudSqlImport  {
 	
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
-	  @Default.String("customer_details.txt")
+	  @Default.String("gs://df-templates-1/customer_details.txt")
 	  String getInputFile();
 	  void setInputFile(String value);
 
@@ -74,7 +74,7 @@ public class CloudSqlImport  {
   }
 
   public static void main(String[] args) throws SQLException {
-	  String sourceBucket = null;
+	  String sourceBucket = "gs://triggerbucket-1/";
 	  List<String> keyList= new ArrayList<String>();
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
@@ -82,6 +82,9 @@ public class CloudSqlImport  {
   String sourceFilePath= null;
   if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
 	  sourceFilePath = sourceBucket+sourceFile;
+  }
+  else {
+	  sourceFilePath=sourceFile;
   }
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   try (Connection con = DriverManager.getConnection(url)){
