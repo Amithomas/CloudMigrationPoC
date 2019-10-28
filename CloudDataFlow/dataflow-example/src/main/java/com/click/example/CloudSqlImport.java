@@ -101,7 +101,7 @@ public class CloudSqlImport  {
     	  ObjectMapper mapper = new ObjectMapper();
     	  nodeMap=mapper.readValue(object, TreeMap.class);
     	  Map<String,String> newMap = nodeMap.entrySet().stream()
-    			     .collect(Collectors.toMap(Map.Entry::getKey, e -> (String)e.getValue()));
+    			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 						/*
 						 * Collection values = json.values(); Iterator keys = values.iterator();
 						 * ArrayList<String> valueList= new ArrayList<String>(); while (keys.hasNext())
