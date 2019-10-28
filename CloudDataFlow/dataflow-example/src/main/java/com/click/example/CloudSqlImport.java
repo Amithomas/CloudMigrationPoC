@@ -16,9 +16,12 @@ import org.apache.beam.sdk.transforms.ParDo;
 
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 
-
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 
@@ -67,6 +70,26 @@ public class CloudSqlImport  {
   Pipeline p = Pipeline.create(options);
   String sourceFilePath = options.getInputFile();
   LOG.info(sourceFilePath);
+  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
+		/*
+		 * String user = "testuser"; String password = "test623";
+		 */
+  
+  //String query = "SELECT VERSION()";
+  try (Connection con = DriverManager.getConnection(url)){
+	  DatabaseMetaData meta = con.getMetaData(); 
+	  ResultSet rs = meta.getColumns(null,null,"customer_details",null);
+	  while(rs.next()){
+		  LOG.info(rs.getString("COLUMN_NAME")) ;
+	  }
+  } catch (SQLException e) {
+	e.printStackTrace();
+}
+  
+  
+  
+  
+  
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFilePath));
   PCollection<ArrayList<String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, ArrayList<String>>() {
 	  private static final long serialVersionUID = 1L;
@@ -89,8 +112,8 @@ public class CloudSqlImport  {
   values.apply(JdbcIO.<ArrayList<String>>write()
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
-                  )
-          .withStatement("insert into customer_details values(?,?,?,?,?)")
+          )
+  .withStatement("insert into customer_details values(?,?,?,?,?)")
               .withPreparedStatementSetter(new StatementSetter()));
     p.run().waitUntilFinish();
   }
