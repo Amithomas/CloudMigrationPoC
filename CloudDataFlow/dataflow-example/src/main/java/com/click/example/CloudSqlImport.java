@@ -1,7 +1,7 @@
 package com.click.example;
 
 import org.apache.beam.sdk.Pipeline;
-
+import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
@@ -47,7 +47,7 @@ public class CloudSqlImport  {
 	
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
-	  @Validation.Required
+	  @Default.String("gs://dataflow-samples/shakespeare/kinglear.txt")
 	  String getInputFile();
 	  void setInputFile(String value);
 
