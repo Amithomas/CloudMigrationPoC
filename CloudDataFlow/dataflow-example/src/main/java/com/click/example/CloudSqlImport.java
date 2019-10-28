@@ -63,12 +63,13 @@ public class CloudSqlImport  {
     }
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws SQLException {
 	  //String sourceFilePath = "gs://triggerbucket-1/Sample.txt";
  
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
   String sourceFilePath = options.getInputFile();
+  ResultSet rs=null;
   LOG.info(sourceFilePath);
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
 		/*
@@ -78,15 +79,13 @@ public class CloudSqlImport  {
   //String query = "SELECT VERSION()";
   try (Connection con = DriverManager.getConnection(url)){
 	  DatabaseMetaData meta = con.getMetaData(); 
-	  ResultSet rs = meta.getColumns(null,null,"customer_details",null);
-	  while(rs.next()){
-		  LOG.info(rs.getString("COLUMN_NAME")) ;
-	  }
+	  rs = meta.getColumns(null,null,"customer_details",null);
+	  
   } catch (SQLException e) {
 	e.printStackTrace();
 }
   
-  
+ String column=rs.getString("COLUMN_NAME") ;
   
   
   
@@ -94,17 +93,20 @@ public class CloudSqlImport  {
   PCollection<ArrayList<String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, ArrayList<String>>() {
 	  private static final long serialVersionUID = 1L;
       @ProcessElement
-      public void processElement(ProcessContext c) throws ParseException {
+      public void processElement(ProcessContext c) throws ParseException, SQLException {
     	  String object= c.element();
     	  JSONParser parser = new JSONParser();
     	  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
          Collection values = json.values();
          Iterator keys = values.iterator();
          ArrayList<String> valueList= new ArrayList<String>();
+      
+   		  LOG.info(column) ;
+   	  
+         
          while (keys.hasNext()) {
              valueList.add(keys.next().toString());
          }
-         LOG.info(valueList.get(0));
          c.output(valueList);
       }
   }));
