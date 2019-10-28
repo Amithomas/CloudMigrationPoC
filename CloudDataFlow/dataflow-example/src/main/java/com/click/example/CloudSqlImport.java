@@ -24,7 +24,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 
@@ -53,11 +53,11 @@ public class CloudSqlImport  {
   }
   
   
-  static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,Object>>
+  static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,String>>
   {
     private static final long serialVersionUID = 1L;
 
-    public void setParameters(Map<String,Object> element, PreparedStatement query) throws Exception
+    public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {
     	int count=1;
     	while(rs.next()) {
@@ -90,7 +90,7 @@ public class CloudSqlImport  {
   
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFilePath));
-  PCollection<Map<String,Object>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,Object>>() {
+  PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
 	  private static final long serialVersionUID = 1L;
       @ProcessElement
       public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
@@ -100,16 +100,18 @@ public class CloudSqlImport  {
     	  Map<String, Object> nodeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	  ObjectMapper mapper = new ObjectMapper();
     	  nodeMap=mapper.readValue(object, TreeMap.class);
+    	  Map<String,String> newMap = nodeMap.entrySet().stream()
+    			     .collect(Collectors.toMap(Map.Entry::getKey, e -> (String)e.getValue()));
 						/*
 						 * Collection values = json.values(); Iterator keys = values.iterator();
 						 * ArrayList<String> valueList= new ArrayList<String>(); while (keys.hasNext())
 						 * { valueList.add(keys.next().toString()); }
 						 */
-         c.output(nodeMap);
+         c.output(newMap);
       }
   }));
   
-  values.apply(JdbcIO.<Map<String,Object>>write()
+  values.apply(JdbcIO.<Map<String,String>>write()
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
