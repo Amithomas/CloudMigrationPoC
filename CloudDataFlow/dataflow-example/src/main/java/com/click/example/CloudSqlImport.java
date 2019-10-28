@@ -64,24 +64,17 @@ public class CloudSqlImport  {
   }
 
   public static void main(String[] args) throws SQLException {
-	  //String sourceFilePath = "gs://triggerbucket-1/Sample.txt";
+	  String sourceBucket = "gs://triggerbucket-1/";
  
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
-  String sourceFilePath = options.getInputFile();
+  String sourceFilePath = sourceBucket+options.getInputFile();
   ResultSet rs=null;
   LOG.info(sourceFilePath);
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
-		/*
-		 * String user = "testuser"; String password = "test623";
-		 */
-  
-  //String query = "SELECT VERSION()";
   try (Connection con = DriverManager.getConnection(url)){
 	  DatabaseMetaData meta = con.getMetaData(); 
 	  rs = meta.getColumns(null,null,"customer_details",null);
-	  rs.next();
-	  
   } catch (SQLException e) {
 	e.printStackTrace();
 }
@@ -101,10 +94,6 @@ public class CloudSqlImport  {
          Collection values = json.values();
          Iterator keys = values.iterator();
          ArrayList<String> valueList= new ArrayList<String>();
-      
-   		  LOG.info(column) ;
-   	  
-         
          while (keys.hasNext()) {
              valueList.add(keys.next().toString());
          }
