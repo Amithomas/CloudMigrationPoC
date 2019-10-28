@@ -66,14 +66,10 @@ public class CloudSqlImport  {
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
     	int count=1;
-    	Object[] keyValues=map.keySet().toArray();
     	for(String key:insideKeys) {
-    		LOG.info(keyValues[count-1].toString());
-    		LOG.info(key.replaceAll("_", ""));
-      query.setString(count, map.get(key.replaceAll("_", "")));
-      count++;
+    		query.setString(count, map.get(key.replaceAll("_", "")));
+    		count++;
     	}
-    	LOG.info(query.toString());
     }
   }
 
@@ -84,8 +80,6 @@ public class CloudSqlImport  {
   Pipeline p = Pipeline.create(options);
   String sourceFile=options.getInputFile();
   String sourceFilePath = sourceBucket+sourceFile;
-  
-  LOG.info(sourceFilePath);
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   try (Connection con = DriverManager.getConnection(url)){
 	  DatabaseMetaData meta = con.getMetaData(); 
@@ -115,11 +109,6 @@ public class CloudSqlImport  {
 	  nodeMap=mapper.readValue(object, HashMap.class);
 	  Map<String,String> newMap = nodeMap.entrySet().stream()
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
-					/*
-					 * Collection values = json.values(); Iterator keys = values.iterator();
-					 * ArrayList<String> valueList= new ArrayList<String>(); while (keys.hasNext())
-					 * { valueList.add(keys.next().toString()); }
-					 */
          c.output(newMap);
       }
   }));
