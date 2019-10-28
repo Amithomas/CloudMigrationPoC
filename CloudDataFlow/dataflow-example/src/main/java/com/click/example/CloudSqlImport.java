@@ -16,6 +16,7 @@ import org.apache.beam.sdk.transforms.ParDo;
 
 import org.apache.beam.sdk.io.jdbc.JdbcIO;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -32,12 +33,16 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class CloudSqlImport  {
 	 
 
 	private static final Logger LOG = LoggerFactory.getLogger(CloudSqlImport.class);
 
-  
+	static ResultSet rs=null;
 
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
@@ -48,18 +53,19 @@ public class CloudSqlImport  {
   }
   
   
-  static class StatementSetter implements JdbcIO.PreparedStatementSetter<ArrayList<String>>
+  static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,String>>
   {
     private static final long serialVersionUID = 1L;
 
-    public void setParameters(ArrayList<String> element, PreparedStatement query) throws Exception
+    public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {
-      query.setLong(1, Integer.valueOf(element.get(2)));
-      query.setString(2, element.get(4));
-      query.setString(3, element.get(1));
-      query.setString(4, element.get(3));
-      query.setString(5, element.get(0));
-      LOG.info(query.toString());
+    	int count=1;
+    	while(rs.next()) {
+      
+      query.setString(count, element.get(rs.getNString("COLUMN_NAME")));
+      count++;
+    	}
+    	LOG.info(query.toString());
     }
   }
 
@@ -70,7 +76,7 @@ public class CloudSqlImport  {
   Pipeline p = Pipeline.create(options);
   String sourceFile=options.getInputFile();
   String sourceFilePath = sourceBucket+sourceFile;
-  ResultSet rs=null;
+  
   LOG.info(sourceFilePath);
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   try (Connection con = DriverManager.getConnection(url)){
@@ -84,24 +90,26 @@ public class CloudSqlImport  {
   
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFilePath));
-  PCollection<ArrayList<String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, ArrayList<String>>() {
+  PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
 	  private static final long serialVersionUID = 1L;
       @ProcessElement
-      public void processElement(ProcessContext c) throws ParseException, SQLException {
+      public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
     	  String object= c.element();
     	  JSONParser parser = new JSONParser();
     	  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
-         Collection values = json.values();
-         Iterator keys = values.iterator();
-         ArrayList<String> valueList= new ArrayList<String>();
-         while (keys.hasNext()) {
-             valueList.add(keys.next().toString());
-         }
-         c.output(valueList);
+    	  Map<String, String> nodeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    	  ObjectMapper mapper = new ObjectMapper();
+    	  nodeMap=mapper.readValue(object, TreeMap.class);
+						/*
+						 * Collection values = json.values(); Iterator keys = values.iterator();
+						 * ArrayList<String> valueList= new ArrayList<String>(); while (keys.hasNext())
+						 * { valueList.add(keys.next().toString()); }
+						 */
+         c.output(nodeMap);
       }
   }));
   
-  values.apply(JdbcIO.<ArrayList<String>>write()
+  values.apply(JdbcIO.<Map<String,String>>write()
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
