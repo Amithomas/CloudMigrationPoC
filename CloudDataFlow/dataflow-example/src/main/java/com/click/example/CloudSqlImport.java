@@ -75,7 +75,7 @@ public class CloudSqlImport  {
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   try (Connection con = DriverManager.getConnection(url)){
 	  DatabaseMetaData meta = con.getMetaData(); 
-	  rs = meta.getColumns(null,null,sourceFile.split(".")[0],null);
+	  rs = meta.getColumns(null,null,sourceFile.split("\\.")[0],null);
   } catch (SQLException e) {
 	e.printStackTrace();
 }
