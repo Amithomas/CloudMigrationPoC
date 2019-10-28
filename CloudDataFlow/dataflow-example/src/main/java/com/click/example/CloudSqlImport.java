@@ -69,7 +69,7 @@ public class CloudSqlImport  {
     	Object[] keyValues=map.keySet().toArray();
     	for(String key:insideKeys) {
     		LOG.info(keyValues[count-1].toString());
-      query.setString(count, element.get(key));
+      query.setString(count, element.get(key.replaceAll("_", "")));
       count++;
     	}
     	LOG.info(query.toString());
