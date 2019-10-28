@@ -68,7 +68,7 @@ public class CloudSqlImport  {
     	int count=1;
     	for(String key:insideKeys) {
       
-      query.setString(count, element.get(key));
+      query.setString(count, element.get(key).replaceAll("_", ""));
       count++;
     	}
     	LOG.info(query.toString());
