@@ -38,7 +38,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class CloudSqlImport  {
-	ResultSet rs; 
 
 	private static final Logger LOG = LoggerFactory.getLogger(CloudSqlImport.class);
 
@@ -57,17 +56,17 @@ public class CloudSqlImport  {
   
   static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,String>>
   {
-	  CloudSqlImport insideCSI;
+	  List<String> insideKeys;
     private static final long serialVersionUID = 1L;
-    StatementSetter(CloudSqlImport csi){
-    	insideCSI=csi;
+    StatementSetter(List<String> keys){
+    	insideKeys=keys;
     }
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {
     	int count=1;
-    	while(insideCSI.rs.next()) {
+    	for(String key:insideKeys) {
       
-      query.setString(count, element.get(insideCSI.rs.getNString("COLUMN_NAME")).toString());
+      query.setString(count, element.get(key));
       count++;
     	}
     	LOG.info(query.toString());
@@ -76,7 +75,7 @@ public class CloudSqlImport  {
 
   public static void main(String[] args) throws SQLException {
 	  String sourceBucket = "gs://triggerbucket-1/";
-	  CloudSqlImport csi = new CloudSqlImport();
+	  List<String> keyList= new ArrayList<String>();
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
   String sourceFile=options.getInputFile();
@@ -86,7 +85,12 @@ public class CloudSqlImport  {
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   try (Connection con = DriverManager.getConnection(url)){
 	  DatabaseMetaData meta = con.getMetaData(); 
-	  csi.rs = meta.getColumns(null,null,sourceFile.split("\\.")[0],null);
+	  ResultSet rs = meta.getColumns(null,null,sourceFile.split("\\.")[0],null);
+  
+  while(rs.next()){
+	  keyList.add(rs.getString("COLUMN_NAME"));
+	  }
+
   } catch (SQLException e) {
 	e.printStackTrace();
 }
@@ -96,22 +100,22 @@ public class CloudSqlImport  {
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFilePath));
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
-	  private static final long serialVersionUID = 1L;
-      @ProcessElement
-      public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
-    	  String object= c.element();
-    	  JSONParser parser = new JSONParser();
-    	  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
-    	  Map<String, Object> nodeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    	  ObjectMapper mapper = new ObjectMapper();
-    	  nodeMap=mapper.readValue(object, TreeMap.class);
-    	  Map<String,String> newMap = nodeMap.entrySet().stream()
-    			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
-						/*
-						 * Collection values = json.values(); Iterator keys = values.iterator();
-						 * ArrayList<String> valueList= new ArrayList<String>(); while (keys.hasNext())
-						 * { valueList.add(keys.next().toString()); }
-						 */
+  private static final long serialVersionUID = 1L;
+  @ProcessElement
+  public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
+	  String object= c.element();
+	  JSONParser parser = new JSONParser();
+	  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
+	  Map<String, Object> nodeMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+	  ObjectMapper mapper = new ObjectMapper();
+	  nodeMap=mapper.readValue(object, TreeMap.class);
+	  Map<String,String> newMap = nodeMap.entrySet().stream()
+			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
+					/*
+					 * Collection values = json.values(); Iterator keys = values.iterator();
+					 * ArrayList<String> valueList= new ArrayList<String>(); while (keys.hasNext())
+					 * { valueList.add(keys.next().toString()); }
+					 */
          c.output(newMap);
       }
   }));
@@ -121,7 +125,7 @@ public class CloudSqlImport  {
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
   .withStatement("insert into customer_details values(?,?,?,?,?)")
-              .withPreparedStatementSetter(new StatementSetter(csi)));
+              .withPreparedStatementSetter(new StatementSetter(keyList)));
     p.run().waitUntilFinish();
   }
 
