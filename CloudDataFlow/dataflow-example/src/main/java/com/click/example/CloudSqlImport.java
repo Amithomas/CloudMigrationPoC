@@ -130,7 +130,7 @@ keyList.remove(size-1);
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
-  .withStatement("insert into customer_details values(?,?,?,?,?)")
+  .withStatement("insert into "+options.getOutput()+" values(?,?,?,?)")
               .withPreparedStatementSetter(new StatementSetter(keyList)));
     p.run().waitUntilFinish();
   }
