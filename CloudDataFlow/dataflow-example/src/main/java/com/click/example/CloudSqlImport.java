@@ -69,7 +69,6 @@ public class CloudSqlImport  {
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
     	int count=0;
-    	insideKeys.remove(insideKeys.size()-1);
     	LOG.info(String.valueOf(insideKeys.size()));
     	for(String key:insideKeys) {
     		if(count<insideKeys.size())
@@ -106,8 +105,8 @@ public class CloudSqlImport  {
 	e.printStackTrace();
 }
 
-
-  
+int size = keyList.size();
+keyList.remove(size-1);
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
