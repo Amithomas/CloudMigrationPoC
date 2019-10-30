@@ -92,6 +92,7 @@ public class CloudSqlImport  {
 		 * sourceFilePath = sourceBucket+sourceFile; } else { sourceFilePath=sourceFile;
 		 * }
 		 */
+  if(null!=options.getOutput()) {
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   try (Connection con = DriverManager.getConnection(url)){
 	  DatabaseMetaData meta = con.getMetaData(); 
@@ -134,5 +135,5 @@ keyList.remove("next_val");
               .withPreparedStatementSetter(new StatementSetter(keyList)));
     p.run().waitUntilFinish();
   }
-
+  }
 }
