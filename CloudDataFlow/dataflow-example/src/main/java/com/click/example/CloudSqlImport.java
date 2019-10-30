@@ -70,7 +70,7 @@ public class CloudSqlImport  {
     {	LOG.info(targetTable);
     	LOG.info(dbMeta.toString());
     	List<String> keyList= dbMeta.get(targetTable);
-    	keyList.remove("next_val");
+    	LOG.info(keyList.toString());
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
     	int count=0;
