@@ -81,8 +81,8 @@ public class CloudSqlImport  {
 	  List<String> keyList= new ArrayList<String>();
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
-  String sourceFile=options.getInputFile();
-  sourceFile.trim();
+  //String sourceFile=options.getInputFile();
+  //sourceFile.trim();
   String sourceFilePath= null;
 		/*
 		 * if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
@@ -105,7 +105,7 @@ public class CloudSqlImport  {
 
   
   
-  PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFile));
+  PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
   private static final long serialVersionUID = 1L;
   @ProcessElement
