@@ -106,7 +106,7 @@ public class CloudSqlImport  {
 }
 
 int size = keyList.size();
-keyList.remove(size-1);
+keyList.remove("next_val");
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
@@ -119,6 +119,7 @@ keyList.remove(size-1);
 	  Map<String, Object> nodeMap = new HashMap<String, Object>();
 	  ObjectMapper mapper = new ObjectMapper();
 	  LOG.info(String.valueOf(keyList));
+	  LOG.info(options.getOutput());
 	  nodeMap=mapper.readValue(object, HashMap.class);
 	  Map<String,String> newMap = nodeMap.entrySet().stream()
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
