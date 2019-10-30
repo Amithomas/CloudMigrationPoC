@@ -59,20 +59,16 @@ public class CloudSqlImport  {
   
   static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,String>>
   {
-	  DatabaseMetaData dbMeta;
+	  Map<String,List<String>> dbMeta;
 	  String targetTable;
     private static final long serialVersionUID = 1L;
-    StatementSetter(DatabaseMetaData meta, String tableName){
-    	dbMeta=meta;
+    StatementSetter(Map<String,List<String>> tableData, String tableName){
+    	dbMeta=tableData;
     	targetTable=tableName;
     }
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {	
-    	ResultSet rs = dbMeta.getColumns(null,null,targetTable,null);
-    	List<String> keyList= new ArrayList<String>();
-    	while(rs.next()){
-    		  keyList.add(rs.getString("COLUMN_NAME"));
-    		  }
+    	List<String> keyList= dbMeta.get(targetTable);
     	keyList.remove("next_val");
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
@@ -101,7 +97,18 @@ public class CloudSqlImport  {
 		 */
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
    Connection con = DriverManager.getConnection(url);
-	  DatabaseMetaData meta = con.getMetaData(); 
+	  DatabaseMetaData meta = con.getMetaData();
+	  Map<String,List<String>> tabelData= new HashMap<String,List<String>>();
+	  ResultSet rs = meta.getTables(null, null, "%", null);
+	  while (rs.next()) {
+		  String metaTableName= rs.getString(3);
+		  ResultSet rsColumns= meta.getColumns(null,null,metaTableName,null);
+		  List<String> columnList= new ArrayList<String>();
+		  while(rsColumns.next()){
+			  columnList.add(rs.getString("COLUMN_NAME"));
+    		  }
+		  tabelData.put(metaTableName,columnList);
+		}
 	  //ResultSet rs = meta.getColumns(null,null,options.getOutput(),null);
   
 		/*
@@ -133,7 +140,7 @@ public class CloudSqlImport  {
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
   .withStatement("insert into "+options.getOutput()+" values(?,?,?,?)")
-              .withPreparedStatementSetter(new StatementSetter(meta,tableName)));
+              .withPreparedStatementSetter(new StatementSetter(tabelData,tableName)));
     p.run().waitUntilFinish();
   }
   
