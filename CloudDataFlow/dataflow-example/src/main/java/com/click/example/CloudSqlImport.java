@@ -67,7 +67,8 @@ public class CloudSqlImport  {
     	targetTable=tableName;
     }
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
-    {	
+    {	LOG.info(targetTable);
+    	LOG.info(dbMeta.toString());
     	List<String> keyList= dbMeta.get(targetTable);
     	keyList.remove("next_val");
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
