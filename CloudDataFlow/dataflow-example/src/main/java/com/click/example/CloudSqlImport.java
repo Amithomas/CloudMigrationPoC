@@ -6,7 +6,7 @@ import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.Validation;
-
+import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.io.TextIO;
 
@@ -47,8 +47,8 @@ public class CloudSqlImport  {
 	
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
-	  String getInputFile();
-	  void setInputFile(String value);
+	  ValueProvider<String> getInputFile();
+	    void setInputFile(ValueProvider<String> value);
 	  
 	  @Description("table")
 	  String getOutput();
