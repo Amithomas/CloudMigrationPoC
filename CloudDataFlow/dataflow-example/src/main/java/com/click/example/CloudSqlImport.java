@@ -65,11 +65,12 @@ public class CloudSqlImport  {
     StatementSetter(Map<String,List<String>> tableData, String tableName){
     	dbMeta=tableData;
     	targetTable=tableName;
+    	LOG.info(tableName);
     }
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {	LOG.info(targetTable);
     	LOG.info(dbMeta.toString());
-    	List<String> keyList= dbMeta.get(targetTable);
+    	List<String> keyList= dbMeta.get("sample");
     	LOG.info(keyList.toString());
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
