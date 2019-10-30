@@ -47,9 +47,12 @@ public class CloudSqlImport  {
 	
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
-	  @Default.String("customer_details.txt")
 	  String getInputFile();
 	  void setInputFile(String value);
+	  
+	  @Description("table")
+	  String getOutput();
+	  void setOutput(String value);
 
   }
   
@@ -81,16 +84,15 @@ public class CloudSqlImport  {
   String sourceFile=options.getInputFile();
   sourceFile.trim();
   String sourceFilePath= null;
-  if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
-	  sourceFilePath = sourceBucket+sourceFile;
-  }
-  else {
-	  sourceFilePath=sourceFile;
-  }
+		/*
+		 * if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
+		 * sourceFilePath = sourceBucket+sourceFile; } else { sourceFilePath=sourceFile;
+		 * }
+		 */
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   try (Connection con = DriverManager.getConnection(url)){
 	  DatabaseMetaData meta = con.getMetaData(); 
-	  ResultSet rs = meta.getColumns(null,null,sourceFile.split("\\.")[0],null);
+	  ResultSet rs = meta.getColumns(null,null,options.getOutput(),null);
   
   while(rs.next()){
 	  keyList.add(rs.getString("COLUMN_NAME"));
@@ -103,7 +105,7 @@ public class CloudSqlImport  {
 
   
   
-  PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFilePath));
+  PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(sourceFile));
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
   private static final long serialVersionUID = 1L;
   @ProcessElement
