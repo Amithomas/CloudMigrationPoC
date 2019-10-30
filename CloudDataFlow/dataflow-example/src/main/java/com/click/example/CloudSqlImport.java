@@ -108,7 +108,7 @@ public class CloudSqlImport  {
 
 int size = keyList.size();
 keyList.remove("next_val");
-  
+  }
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
   private static final long serialVersionUID = 1L;
@@ -135,5 +135,5 @@ keyList.remove("next_val");
               .withPreparedStatementSetter(new StatementSetter(keyList)));
     p.run().waitUntilFinish();
   }
-  }
+  
 }
