@@ -75,6 +75,7 @@ public class CloudSqlImport  {
     		query.setString(++count, map.get(key.replaceAll("_", "")));
     		LOG.info(key);
     	}
+    	LOG.info(query.toString());
     }
   }
 
