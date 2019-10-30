@@ -70,7 +70,7 @@ public class CloudSqlImport  {
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {	LOG.info(targetTable);
     	LOG.info(dbMeta.toString());
-    	List<String> keyList= dbMeta.get("sample");
+    	List<String> keyList= dbMeta.get("customer_details");
     	LOG.info(keyList.toString());
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
@@ -141,7 +141,7 @@ public class CloudSqlImport  {
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
-  .withStatement("insert into "+options.getOutput()+" values(?,?,?,?)")
+  .withStatement("insert into customer_details values(?,?,?,?,?)")
               .withPreparedStatementSetter(new StatementSetter(tabelData,tableName)));
     p.run().waitUntilFinish();
   }
