@@ -105,7 +105,7 @@ public class CloudSqlImport  {
 		  ResultSet rsColumns= meta.getColumns(null,null,metaTableName,null);
 		  List<String> columnList= new ArrayList<String>();
 		  while(rsColumns.next()){
-			  columnList.add(rs.getString("COLUMN_NAME"));
+			  columnList.add(rsColumns.getString("COLUMN_NAME"));
     		  }
 		  tabelData.put(metaTableName,columnList);
 		}
