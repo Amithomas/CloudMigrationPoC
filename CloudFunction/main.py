@@ -15,8 +15,9 @@ project = 'snappy-meridian-255502'
 def intitate_data_flow(data, context):
 	
 	jobName=data['name']
+  dbName= jobName.split(".")
 	tmpLocation = 'gs://df-temp-1/temp/'
-	templatePath ='gs://df-templates-1/templateDF'
+	templatePath ='gs://df-templates-1/templateDFtest.json'
 	fileLoc='gs://triggerbucket-1/'+jobName
 	
 	request_body = {
@@ -25,7 +26,8 @@ def intitate_data_flow(data, context):
             "tempLocation": tmpLocation
           },
          "parameters": {
-           "inputFile": jobName,
+           "inputFile": fileLoc,
+           "output" : dbName[0] 
          },
           "jobName": jobName
         }
@@ -35,7 +37,7 @@ def intitate_data_flow(data, context):
         body= request_body,
         gcsPath = templatePath
 	)
-  @retry(stop=stop_after_attempt(3), wait=wait_random(min=1, max=2))
+
 	response = request.execute()
 
 	pprint(response)
