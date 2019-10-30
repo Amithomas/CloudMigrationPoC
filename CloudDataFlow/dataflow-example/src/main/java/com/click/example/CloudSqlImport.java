@@ -59,19 +59,27 @@ public class CloudSqlImport  {
   
   static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,String>>
   {
-	  List<String> insideKeys;
+	  DatabaseMetaData dbMeta;
+	  String targetTable;
     private static final long serialVersionUID = 1L;
-    StatementSetter(List<String> keys){
-    	insideKeys=keys;
+    StatementSetter(DatabaseMetaData meta, String tableName){
+    	dbMeta=meta;
+    	targetTable=tableName;
     }
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
-    {
+    {	
+    	ResultSet rs = dbMeta.getColumns(null,null,targetTable,null);
+    	List<String> keyList= new ArrayList<String>();
+    	while(rs.next()){
+    		  keyList.add(rs.getString("COLUMN_NAME"));
+    		  }
+    	keyList.remove("next_val");
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
     	int count=0;
-    	LOG.info(String.valueOf(insideKeys.size()));
-    	for(String key:insideKeys) {
-    		if(count<insideKeys.size())
+    	LOG.info(String.valueOf(keyList.size()));
+    	for(String key:keyList) {
+    		if(count<keyList.size())
     		query.setString(++count, map.get(key.replaceAll("_", "")));
     		LOG.info(key);
     	}
@@ -81,34 +89,28 @@ public class CloudSqlImport  {
 
   public static void main(String[] args) throws SQLException {
 	  String sourceBucket = "gs://triggerbucket-1/";
-	  List<String> keyList= new ArrayList<String>();
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
   //String sourceFile=options.getInputFile();
   //sourceFile.trim();
-  String sourceFilePath= null;
+  String tableName= options.getOutput();
 		/*
 		 * if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
 		 * sourceFilePath = sourceBucket+sourceFile; } else { sourceFilePath=sourceFile;
 		 * }
 		 */
-  if(null!=options.getOutput()) {
   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
-  try (Connection con = DriverManager.getConnection(url)){
+   Connection con = DriverManager.getConnection(url);
 	  DatabaseMetaData meta = con.getMetaData(); 
-	  ResultSet rs = meta.getColumns(null,null,options.getOutput(),null);
+	  //ResultSet rs = meta.getColumns(null,null,options.getOutput(),null);
   
-  while(rs.next()){
-	  keyList.add(rs.getString("COLUMN_NAME"));
-	  }
+		/*
+		 * while(rs.next()){ keyList.add(rs.getString("COLUMN_NAME")); }
+		 */
 
-  } catch (SQLException e) {
-	e.printStackTrace();
-}
+  
 
-int size = keyList.size();
-keyList.remove("next_val");
-  }
+
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
   private static final long serialVersionUID = 1L;
@@ -119,7 +121,6 @@ keyList.remove("next_val");
 	  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
 	  Map<String, Object> nodeMap = new HashMap<String, Object>();
 	  ObjectMapper mapper = new ObjectMapper();
-	  LOG.info(String.valueOf(keyList));
 	  nodeMap=mapper.readValue(object, HashMap.class);
 	  Map<String,String> newMap = nodeMap.entrySet().stream()
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
@@ -132,7 +133,7 @@ keyList.remove("next_val");
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
   .withStatement("insert into "+options.getOutput()+" values(?,?,?,?)")
-              .withPreparedStatementSetter(new StatementSetter(keyList)));
+              .withPreparedStatementSetter(new StatementSetter(meta,tableName)));
     p.run().waitUntilFinish();
   }
   
