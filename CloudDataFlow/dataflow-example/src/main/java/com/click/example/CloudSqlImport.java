@@ -69,8 +69,10 @@ public class CloudSqlImport  {
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
     	int count=1;
+    	LOG.info(String.valueOf(insideKeys.size()));
     	for(String key:insideKeys) {
     		query.setString(count, map.get(key.replaceAll("_", "")));
+    		LOG.info(key);
     		count++;
     	}
     }
