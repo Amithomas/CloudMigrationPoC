@@ -118,6 +118,7 @@ public class CloudSqlImport  {
 	  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
 	  Map<String, Object> nodeMap = new HashMap<String, Object>();
 	  ObjectMapper mapper = new ObjectMapper();
+	  LOG.info(String.valueOf(keyList));
 	  nodeMap=mapper.readValue(object, HashMap.class);
 	  Map<String,String> newMap = nodeMap.entrySet().stream()
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
