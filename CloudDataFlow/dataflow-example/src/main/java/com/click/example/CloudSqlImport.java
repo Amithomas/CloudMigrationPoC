@@ -1,11 +1,9 @@
 package com.click.example;
 
 import org.apache.beam.sdk.Pipeline;
-import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.sdk.options.Validation;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.io.TextIO;
@@ -14,7 +12,6 @@ import org.apache.beam.sdk.io.TextIO;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 
-import org.apache.beam.sdk.io.jdbc.JdbcIO;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -29,7 +26,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 
 
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +53,7 @@ public class CloudSqlImport  {
   }
   
   static class CustomFn extends DoFn<Map<String,String>, String> {
+	  private static final long serialVersionUID = 1L;
 	    ValueProvider<String> table;
 	    Map<String,List<String>> tabelData;
 	    Connection con=null;
@@ -129,15 +126,12 @@ public class CloudSqlImport  {
 	  @ProcessElement
 	  public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
 		  String object= c.element();
-		  JSONParser parser = new JSONParser();
-		  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
 		  Map<String, Object> nodeMap = new HashMap<String, Object>();
 		  ObjectMapper mapper = new ObjectMapper();
 		  nodeMap=mapper.readValue(object, HashMap.class);
 		  Map<String,String> newMap = nodeMap.entrySet().stream()
 		     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 		  c.output(newMap);
-		  //newMap.put("tableName", options.getOutput()) ;
 		  }
   }));
   
