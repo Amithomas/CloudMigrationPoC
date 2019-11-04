@@ -52,7 +52,7 @@ public class CloudSqlImport  {
 	  
 	  @Description("table")
 	  String getOutput();
-	  void setOutput(String value);
+	  void setOutput(String output);
 
   }
   
