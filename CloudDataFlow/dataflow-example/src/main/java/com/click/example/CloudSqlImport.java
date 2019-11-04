@@ -49,20 +49,6 @@ public class CloudSqlImport  {
       @Description("table")
 	  ValueProvider<String> getOutput();
 	  void setOutput(ValueProvider<String> value);
-	  
-		/*
-		 * @Description("project") ValueProvider<String> getProject(); void
-		 * setProject(ValueProvider<String> value);
-		 * 
-		 * @Description("stagingLocation") ValueProvider<String> getStagingLocation();
-		 * void setStagingLocation(ValueProvider<String> value);
-		 * 
-		 * @Description("tempLocation") String getTempLocation(); void
-		 * setTempLocation(String value);
-		 * 
-		 * @Description("templateLocation") ValueProvider<String> getTemplateLocation();
-		 * void setTemplateLocation(ValueProvider<String> value);
-		 */
 
   }
   
