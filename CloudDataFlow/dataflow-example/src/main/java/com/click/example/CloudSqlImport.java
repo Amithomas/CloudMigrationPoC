@@ -129,16 +129,17 @@ public class CloudSqlImport  {
   values.apply("Jdbc Write", ParDo.of(new DoFn<Map<String,String>, String>() {
 	  private static final long serialVersionUID = 1L;
 	  @ProcessElement
-	  public void processElement(ProcessContext c) throws SQLException  {
-		  Map<String,String> element= c.element();
+	  public void processElement(ProcessContext d) throws SQLException  {
+		  Map<String,String> element= d.element();
 		  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		  map.putAll(element);
 		  LOG.info(map.toString());
+		  TransformOptions options2= d.getPipelineOptions().as(TransformOptions.class);
 		  Connection con = DriverManager.getConnection(url);
-		  List<String> keyList= tabelData.get(options.getOutput());
+		  List<String> keyList= tabelData.get(options2.getOutput());
 		  LOG.info(keyList.toString());
 		  String formattedQuery= getQuery(map.size()-1);
-		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, options.getOutput()));
+		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, options2.getOutput()));
 		  int count=0;
 		  for(String key:keyList) {
 	    		if(count<keyList.size())
