@@ -120,7 +120,7 @@ public class CloudSqlImport  {
 			  Map<String,String> newMap = nodeMap.entrySet().stream()
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 			  c.output(newMap);
-			  newMap.put("tableName", options.getOutput()) ;
+			  //newMap.put("tableName", options.getOutput()) ;
 		  }
   }));
   
@@ -134,10 +134,11 @@ public class CloudSqlImport  {
 		  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		  map.putAll(element);
 		  LOG.info(map.toString());
+		  String table= options.getOutput();
 		  Connection con = DriverManager.getConnection(url);
-		  List<String> keyList= tabelData.get("customer_details");
+		  List<String> keyList= tabelData.get(table);
 		  LOG.info(keyList.toString());
-		  String formattedQuery= getQuery(map.get("tableName"),(map.size()-1));
+		  String formattedQuery= getQuery(table,(map.size()-1));
 		  PreparedStatement query =con.prepareStatement(formattedQuery);
 		  int count=0;
 		  for(String key:keyList) {
