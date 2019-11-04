@@ -199,7 +199,7 @@ public class CloudSqlImport  {
 	  StringBuilder query = new StringBuilder();
 	  query.append("insert into %s values(");
 	  for(int count = 0; count<size;count++) {
-		  if(count == size-1) {
+		  if(count == size) {
 			  query.append("?");
 		  }
 		  else {
