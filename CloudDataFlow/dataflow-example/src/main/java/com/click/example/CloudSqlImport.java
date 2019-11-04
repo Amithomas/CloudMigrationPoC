@@ -84,20 +84,12 @@ public class CloudSqlImport  {
   }
 
   public static void main(String[] args) throws SQLException {
-	  String sourceBucket = "gs://triggerbucket-1/";
+	  
 	  PipelineOptionsFactory.register(TransformOptions.class);
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
-  Pipeline p = Pipeline.create(options);
-  //String sourceFile=options.getInputFile();
-  //sourceFile.trim();
-  String tableName=null;
-		/*
-		 * if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
-		 * sourceFilePath = sourceBucket+sourceFile; } else { sourceFilePath=sourceFile;
-		 * }
-		 */
-  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
-   Connection con = DriverManager.getConnection(url);
+	  Pipeline p = Pipeline.create(options);
+	  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
+	  Connection con = DriverManager.getConnection(url);
 	  DatabaseMetaData meta = con.getMetaData();
 	  Map<String,List<String>> tabelData= new HashMap<String,List<String>>();
 	  ResultSet rs = meta.getTables(null, null, "%", null);
@@ -110,33 +102,31 @@ public class CloudSqlImport  {
     		  }
 		  tabelData.put(metaTableName,columnList);
 		}
-	  //ResultSet rs = meta.getColumns(null,null,options.getOutput(),null);
-  
-		/*
-		 * while(rs.next()){ keyList.add(rs.getString("COLUMN_NAME")); }
-		 */
+	  
+	  
+	  
 
-  
-
-
-  PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
-  PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
-  private static final long serialVersionUID = 1L;
-  @ProcessElement
-  public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
-	  String object= c.element();
-	  JSONParser parser = new JSONParser();
-	  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
-	  Map<String, Object> nodeMap = new HashMap<String, Object>();
-	  ObjectMapper mapper = new ObjectMapper();
-	  nodeMap=mapper.readValue(object, HashMap.class);
-	  Map<String,String> newMap = nodeMap.entrySet().stream()
+	  PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
+	  PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
+		  private static final long serialVersionUID = 1L;
+		  @ProcessElement
+		  public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
+			  String object= c.element();
+			  JSONParser parser = new JSONParser();
+			  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
+			  Map<String, Object> nodeMap = new HashMap<String, Object>();
+			  ObjectMapper mapper = new ObjectMapper();
+			  nodeMap=mapper.readValue(object, HashMap.class);
+			  Map<String,String> newMap = nodeMap.entrySet().stream()
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
-         c.output(newMap);
-         TransformOptions options= c.getPipelineOptions().as(TransformOptions.class);
-         newMap.put(tableName, options.getOutput()) ;
-      }
+			  c.output(newMap);
+			  TransformOptions options= c.getPipelineOptions().as(TransformOptions.class);
+			  newMap.put("tableName", options.getOutput()) ;
+		  }
   }));
+  
+  
+  
   values.apply("Jdbc Write", ParDo.of(new DoFn<Map<String,String>, String>() {
 	  private static final long serialVersionUID = 1L;
 	  @ProcessElement
@@ -148,7 +138,8 @@ public class CloudSqlImport  {
 		  Connection con = DriverManager.getConnection(url);
 		  List<String> keyList= tabelData.get("customer_details");
 		  LOG.info(keyList.toString());
-		  PreparedStatement query =con.prepareStatement("insert into customer_details values(?,?,?,?,?)");
+		  String formattedQuery= getQuery(map.get("tableName"),(map.size()-1));
+		  PreparedStatement query =con.prepareStatement(formattedQuery);
 		  int count=0;
 		  for(String key:keyList) {
 	    		if(count<keyList.size())
@@ -171,4 +162,19 @@ public class CloudSqlImport  {
     p.run().waitUntilFinish();
   }
   
+  private static String getQuery(String tableName, int size) {
+	  StringBuilder query = new StringBuilder();
+	  query.append("insert into "+tableName+" values(");
+	  for(int count = 0; count<size;count++) {
+		  if(count == size-1) {
+			  query.append("?");
+		  }
+		  else {
+			  query.append("?,");
+		  }
+	  }
+	  query.append(")");
+	  return query.toString();
+	  
+  }
 }
