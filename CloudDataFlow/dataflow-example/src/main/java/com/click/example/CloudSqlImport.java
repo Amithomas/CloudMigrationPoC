@@ -49,6 +49,10 @@ public class CloudSqlImport  {
   @Description("table")
 	  ValueProvider<String> getOutput();
 	  void setOutput(ValueProvider<String> value);
+	  
+	  @Description("project")
+	  ValueProvider<String> getProject();
+	  void setProject(ValueProvider<String> value);
 
   }
   
