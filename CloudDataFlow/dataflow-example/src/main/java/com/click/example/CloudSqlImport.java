@@ -142,7 +142,9 @@ public class CloudSqlImport  {
 	  @ProcessElement
 	  public void processElement(ProcessContext c) throws SQLException  {
 		  Map<String,String> element= c.element();
-		  LOG.info(element.toString());
+		  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+		  map.putAll(element);
+		  LOG.info(map.toString());
 		  Connection con = DriverManager.getConnection(url);
 		  List<String> keyList= tabelData.get("customer_details");
 		  LOG.info(keyList.toString());
@@ -150,8 +152,8 @@ public class CloudSqlImport  {
 		  int count=0;
 		  for(String key:keyList) {
 	    		if(count<keyList.size())
-	    		query.setString(++count, element.get(key.replaceAll("_", "")));
-	    		LOG.info(element.get(key.replaceAll("_", "")));
+	    		query.setString(++count, map.get(key.replaceAll("_", "")));
+	    		LOG.info(map.get(key.replaceAll("_", "")));
 	    	}
 		  query.execute();
 		  
