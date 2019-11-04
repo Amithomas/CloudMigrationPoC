@@ -134,12 +134,11 @@ public class CloudSqlImport  {
 		  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		  map.putAll(element);
 		  LOG.info(map.toString());
-		  String table= options.getOutput();
 		  Connection con = DriverManager.getConnection(url);
-		  List<String> keyList= tabelData.get(table);
+		  List<String> keyList= tabelData.get(options.getOutput());
 		  LOG.info(keyList.toString());
 		  String formattedQuery= getQuery(map.size()-1);
-		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, table));
+		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, options.getOutput()));
 		  int count=0;
 		  for(String key:keyList) {
 	    		if(count<keyList.size())
