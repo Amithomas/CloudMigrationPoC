@@ -79,7 +79,6 @@ public class CloudSqlImport  {
     		query.setString(++count, map.get(key.replaceAll("_", "")));
     		LOG.info(key);
     	}
-    
     	LOG.info(query.toString());
     }
   }
@@ -137,13 +136,12 @@ public class CloudSqlImport  {
          c.output(newMap);
       }
   }));
- 
   
   values.apply(JdbcIO.<Map<String,String>>write()
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
-  .withStatement(String.format("insert into %s values(?,?,?,?,?)",options.getOutput()))
+  .withStatement("insert into "+tableName+" values(?,?,?,?,?)")
               .withPreparedStatementSetter(new StatementSetter(tabelData)));
     p.run().waitUntilFinish();
   }
