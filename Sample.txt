@@ -1,4 +1,0 @@
-{"customerId": 1,"customerName": "Amith Thomas","regMob": "+19525564652","regEmail": "Amith.Thomas@equifax.com","regStatus": 0}
-{"customerId": 2,"customerName": "Nimmi Krishnan","regMob": "+12057750342","regEmail": "Nimmi.Krishnan@equifax.com","regStatus": 1}
-{"customerId": 3,"customerName": "Reju Pillai","regMob": "+15967654659","regEmail": "Reju.Pillai@equifax.com","regStatus": 1}
-{"customerId": 4,"customerName": "Salil Kumar","regMob": "+16548729552","regEmail": "Salil.Kumar@equifax.com","regStatus": 1}
