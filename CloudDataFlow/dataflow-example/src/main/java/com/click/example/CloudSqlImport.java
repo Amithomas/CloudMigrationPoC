@@ -120,7 +120,6 @@ public class CloudSqlImport  {
 			  Map<String,String> newMap = nodeMap.entrySet().stream()
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 			  c.output(newMap);
-			  TransformOptions options= c.getPipelineOptions().as(TransformOptions.class);
 			  newMap.put("tableName", options.getOutput()) ;
 		  }
   }));
