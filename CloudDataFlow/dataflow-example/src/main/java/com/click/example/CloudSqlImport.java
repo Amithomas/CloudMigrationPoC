@@ -138,8 +138,8 @@ public class CloudSqlImport  {
 		  Connection con = DriverManager.getConnection(url);
 		  List<String> keyList= tabelData.get(table);
 		  LOG.info(keyList.toString());
-		  String formattedQuery= getQuery(table,(map.size()-1));
-		  PreparedStatement query =con.prepareStatement(formattedQuery);
+		  String formattedQuery= getQuery(map.size()-1);
+		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, table));
 		  int count=0;
 		  for(String key:keyList) {
 	    		if(count<keyList.size())
@@ -162,9 +162,9 @@ public class CloudSqlImport  {
     p.run().waitUntilFinish();
   }
   
-  private static String getQuery(String tableName, int size) {
+  private static String getQuery( int size) {
 	  StringBuilder query = new StringBuilder();
-	  query.append("insert into "+tableName+" values(");
+	  query.append("insert into %s values(");
 	  for(int count = 0; count<size;count++) {
 		  if(count == size-1) {
 			  query.append("?");
