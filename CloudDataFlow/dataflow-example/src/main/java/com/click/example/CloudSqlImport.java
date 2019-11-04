@@ -51,12 +51,43 @@ public class CloudSqlImport  {
 	    void setInputFile(ValueProvider<String> value);
 	  
 	  @Description("table")
-	  String getOutput();
-	  void setOutput(String value);
+	  ValueProvider<String> getOutput();
+	  void setOutput(ValueProvider<String> value);
 
   }
   
-  
+  static class CustomFn extends DoFn<Map<String,String>, String> {
+	    // access options from wihtin the ParDo
+	    ValueProvider<String> table;
+	    Map<String,List<String>> tabelData;
+	    public CustomFn(ValueProvider<String> table,Map<String,List<String>> tabelData) {
+	        this.table = table;
+	        this.tabelData=tabelData;
+	    }
+	    @ProcessElement
+		  public void processElement(ProcessContext c) throws SQLException  {
+			  Map<String,String> element= c.element();
+			  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
+			  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+			  map.putAll(element);
+			  LOG.info(map.toString());
+			  
+			  Connection con = DriverManager.getConnection(url);
+			  List<String> keyList= tabelData.get(table.get());
+			  LOG.info(keyList.toString());
+			  String formattedQuery= getQuery(map.size()-1);
+			  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, table.get()));
+			  int count=0;
+			  for(String key:keyList) {
+		    		if(count<keyList.size())
+		    		query.setString(++count, map.get(key.replaceAll("_", "")));
+		    		LOG.info(map.get(key.replaceAll("_", "")));
+		    	}
+			  query.execute();
+			  
+	    }
+  }
+	    
   static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,String>>
   {
 	  Map<String,List<String>> dbMeta;
@@ -86,7 +117,9 @@ public class CloudSqlImport  {
   public static void main(String[] args) throws SQLException {
 	  
 	  PipelineOptionsFactory.register(TransformOptions.class);
-	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
+	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);  
+	  
+	  ValueProvider<String> table = options.getOutput();
 	  Pipeline p = Pipeline.create(options);
 	  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
 	  Connection con = DriverManager.getConnection(url);
@@ -126,20 +159,20 @@ public class CloudSqlImport  {
   
   
   
-  values.apply("Jdbc Write", ParDo.of(new DoFn<Map<String,String>, String>() {
-	  private static final long serialVersionUID = 1L;
+  values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData))); 
+	  /*private static final long serialVersionUID = 1L;
 	  @ProcessElement
-	  public void processElement(ProcessContext d) throws SQLException  {
-		  Map<String,String> element= d.element();
+	  public void processElement(ProcessContext c) throws SQLException  {
+		  Map<String,String> element= c.element();
 		  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		  map.putAll(element);
 		  LOG.info(map.toString());
-		  TransformOptions options2= d.getPipelineOptions().as(TransformOptions.class);
+		  
 		  Connection con = DriverManager.getConnection(url);
-		  List<String> keyList= tabelData.get(options2.getOutput());
+		  List<String> keyList= tabelData.get(options.getOutput());
 		  LOG.info(keyList.toString());
 		  String formattedQuery= getQuery(map.size()-1);
-		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, options2.getOutput()));
+		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, options.getOutput()));
 		  int count=0;
 		  for(String key:keyList) {
 	    		if(count<keyList.size())
@@ -148,7 +181,7 @@ public class CloudSqlImport  {
 	    	}
 		  query.execute();
 		  
-	  }}));
+	  }}));*/
   
   
 		/*
@@ -177,4 +210,4 @@ public class CloudSqlImport  {
 	  return query.toString();
 	  
   }
-}
+  }
