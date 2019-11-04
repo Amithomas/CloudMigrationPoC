@@ -40,7 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CloudSqlImport  {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CloudSqlImport.class);
-
+	String tableName;
 	
 	
 		
@@ -62,15 +62,13 @@ public class CloudSqlImport  {
 	  Map<String,List<String>> dbMeta;
 	  String targetTable;
     private static final long serialVersionUID = 1L;
-    StatementSetter(Map<String,List<String>> tableData, String tableName){
+    StatementSetter(Map<String,List<String>> tableData){
     	dbMeta=tableData;
-    	targetTable=tableName;
-    	LOG.info(tableName);
     }
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {	LOG.info(targetTable);
     	LOG.info(dbMeta.toString());
-    	List<String> keyList= dbMeta.get("customer_details");
+    	List<String> keyList= dbMeta.get(element.get("tableName"));
     	LOG.info(keyList.toString());
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
@@ -86,13 +84,16 @@ public class CloudSqlImport  {
   }
 
   public static void main(String[] args) throws SQLException {
+	  CloudSqlImport csi = new CloudSqlImport();
+	  
 	  String sourceBucket = "gs://triggerbucket-1/";
 	  PipelineOptionsFactory.register(TransformOptions.class);
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
+  
   //String sourceFile=options.getInputFile();
   //sourceFile.trim();
-  String tableName= options.getOutput();
+ 
 		/*
 		 * if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
 		 * sourceFilePath = sourceBucket+sourceFile; } else { sourceFilePath=sourceFile;
@@ -136,7 +137,8 @@ public class CloudSqlImport  {
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
          c.output(newMap);
          TransformOptions options= c.getPipelineOptions().as(TransformOptions.class);
-         newMap.put(tableName, options.getOutput()) ;
+         newMap.put("tableName", options.getOutput()) ;
+         csi.tableName=options.getOutput();
       }
   }));
   
@@ -144,8 +146,8 @@ public class CloudSqlImport  {
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
-  .withStatement("insert into "+tableName+" values(?,?,?,?,?)")
-              .withPreparedStatementSetter(new StatementSetter(tabelData,tableName)));
+  .withStatement("insert into "+csi.tableName+" values(?,?,?,?,?)")
+              .withPreparedStatementSetter(new StatementSetter(tabelData)));
     p.run().waitUntilFinish();
   }
   
