@@ -40,7 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CloudSqlImport  {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CloudSqlImport.class);
-	String tableName;
+
 	
 	
 		
@@ -84,16 +84,13 @@ public class CloudSqlImport  {
   }
 
   public static void main(String[] args) throws SQLException {
-	  CloudSqlImport csi = new CloudSqlImport();
-	  
 	  String sourceBucket = "gs://triggerbucket-1/";
 	  PipelineOptionsFactory.register(TransformOptions.class);
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
-  
   //String sourceFile=options.getInputFile();
   //sourceFile.trim();
- 
+  String tableName=null;
 		/*
 		 * if(sourceFile!=null || !sourceFile.isEmpty()||sourceFile.length()!=0) {
 		 * sourceFilePath = sourceBucket+sourceFile; } else { sourceFilePath=sourceFile;
@@ -137,8 +134,7 @@ public class CloudSqlImport  {
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
          c.output(newMap);
          TransformOptions options= c.getPipelineOptions().as(TransformOptions.class);
-         newMap.put("tableName", options.getOutput()) ;
-         csi.tableName=options.getOutput();
+         newMap.put(tableName, options.getOutput()) ;
       }
   }));
   
@@ -146,7 +142,7 @@ public class CloudSqlImport  {
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
-  .withStatement("insert into "+csi.tableName+" values(?,?,?,?,?)")
+  .withStatement("insert into "+tableName+" values(?,?,?,?,?)")
               .withPreparedStatementSetter(new StatementSetter(tabelData)));
     p.run().waitUntilFinish();
   }
