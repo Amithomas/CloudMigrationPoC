@@ -75,7 +75,7 @@ public class CloudSqlImport  {
 			  Connection con = DriverManager.getConnection(url);
 			  List<String> keyList= tabelData.get(table.get());
 			  LOG.info(keyList.toString());
-			  String formattedQuery= getQuery(map.size()-1);
+			  String formattedQuery= getQuery(map.size());
 			  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, table.get()));
 			  int count=0;
 			  for(String key:keyList) {
@@ -199,7 +199,7 @@ public class CloudSqlImport  {
 	  StringBuilder query = new StringBuilder();
 	  query.append("insert into %s values(");
 	  for(int count = 0; count<size;count++) {
-		  if(count == size) {
+		  if(count ==size-1) {
 			  query.append("?");
 		  }
 		  else {
