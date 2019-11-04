@@ -43,10 +43,10 @@ public class CloudSqlImport  {
 	
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
-  ValueProvider<String> getInputFile();
-    void setInputFile(ValueProvider<String> value);
+	  ValueProvider<String> getInputFile();
+	  void setInputFile(ValueProvider<String> value);
   
-  @Description("table")
+      @Description("table")
 	  ValueProvider<String> getOutput();
 	  void setOutput(ValueProvider<String> value);
 	  
@@ -62,7 +62,10 @@ public class CloudSqlImport  {
 	  String getTempLocation();
 	  void setTempLocation(String value);
 	  
-	  
+	  @Description("templateLocation")
+	  ValueProvider<String> getTemplateLocation();
+	  void setTemplateLocation(ValueProvider<String> value);
+
   }
   
   static class CustomFn extends DoFn<Map<String,String>, String> {
