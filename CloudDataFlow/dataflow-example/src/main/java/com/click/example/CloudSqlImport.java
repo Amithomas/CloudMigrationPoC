@@ -53,7 +53,16 @@ public class CloudSqlImport  {
 	  @Description("project")
 	  ValueProvider<String> getProject();
 	  void setProject(ValueProvider<String> value);
-
+	  
+	  @Description("stagingLocation")
+	  ValueProvider<String> getStagingLocation();
+	  void setStagingLocation(ValueProvider<String> value);
+	  
+	  @Description("tempLocation")
+	  String getTempLocation();
+	  void setTempLocation(String value);
+	  
+	  
   }
   
   static class CustomFn extends DoFn<Map<String,String>, String> {
