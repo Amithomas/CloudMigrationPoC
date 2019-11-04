@@ -151,7 +151,7 @@ public class CloudSqlImport  {
 	    		query.setString(++count, element.get(key.replaceAll("_", "")));
 	    		LOG.info(key);
 	    	}
-		  query.executeQuery();
+		  query.execute();
 		  
 	  }}));
   
