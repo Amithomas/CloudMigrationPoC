@@ -47,10 +47,10 @@ public class CloudSqlImport  {
 	
   public interface TransformOptions  extends PipelineOptions  {
 	  @Description("Path of the file to read from")
-	  ValueProvider<String> getInputFile();
-	    void setInputFile(ValueProvider<String> value);
-	  
-	  @Description("table")
+  ValueProvider<String> getInputFile();
+    void setInputFile(ValueProvider<String> value);
+  
+  @Description("table")
 	  ValueProvider<String> getOutput();
 	  void setOutput(ValueProvider<String> value);
 
@@ -65,63 +65,38 @@ public class CloudSqlImport  {
 	        this.tabelData=tabelData;
 	    }
 	    private String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";	
-	    private Connection JdbcCreateConnection() throws SQLException {
-	    	Connection connection = DriverManager.getConnection(url);
-	    	return connection;
-	    }
-	    @Setup
-	    public void setup() throws SQLException {
-	    	con = JdbcCreateConnection();
-	    }
-	    @ProcessElement
-		  public void processElement(ProcessContext c) throws SQLException  {
-			  Map<String,String> element= c.element();
-			  
-			  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-			  map.putAll(element);
-			  LOG.info(map.toString());
-			  
-			  
-			  List<String> keyList= tabelData.get(table.get());
-			  LOG.info(keyList.toString());
-			  String formattedQuery= getQuery(map.size());
-			  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, table.get()));
-			  int count=0;
-			  for(String key:keyList) {
-		    		if(count<keyList.size())
-		    		query.setString(++count, map.get(key.replaceAll("_", "")));
-		    		LOG.info(map.get(key.replaceAll("_", "")));
+    private Connection JdbcCreateConnection() throws SQLException {
+    	Connection connection = DriverManager.getConnection(url);
+    	return connection;
+    }
+    @Setup
+    public void setup() throws SQLException {
+    	con = JdbcCreateConnection();
+    }
+    @ProcessElement
+	  public void processElement(ProcessContext c) throws SQLException  {
+		  Map<String,String> element= c.element();
+		  
+		  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+		  map.putAll(element);
+		  LOG.info(map.toString());
+		  
+		  
+		  List<String> keyList= tabelData.get(table.get());
+		  LOG.info(keyList.toString());
+		  String formattedQuery= getQuery(map.size());
+		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, table.get()));
+		  int count=0;
+		  for(String key:keyList) {
+	    		if(count<keyList.size())
+	    		query.setString(++count, map.get(key.replaceAll("_", "")));
+	    		LOG.info(map.get(key.replaceAll("_", "")));
 		    	}
 			  query.execute();
 			  
 	    }
   }
 	    
-  static class StatementSetter implements JdbcIO.PreparedStatementSetter<Map<String,String>>
-  {
-	  Map<String,List<String>> dbMeta;
-	  String targetTable;
-    private static final long serialVersionUID = 1L;
-    StatementSetter(Map<String,List<String>> tableData){
-    	dbMeta=tableData;
-    }
-    public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
-    {	LOG.info(targetTable);
-    	LOG.info(dbMeta.toString());
-    	List<String> keyList= dbMeta.get(element.get("tableName"));
-    	LOG.info(keyList.toString());
-    	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    	map.putAll(element);
-    	int count=0;
-    	LOG.info(String.valueOf(keyList.size()));
-    	for(String key:keyList) {
-    		if(count<keyList.size())
-    		query.setString(++count, map.get(key.replaceAll("_", "")));
-    		LOG.info(key);
-    	}
-    	LOG.info(query.toString());
-    }
-  }
 
   public static void main(String[] args) throws SQLException {
 	  
@@ -131,92 +106,60 @@ public class CloudSqlImport  {
 	  ValueProvider<String> table = options.getOutput();
 	  Pipeline p = Pipeline.create(options);
 	  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
-	  Connection con = DriverManager.getConnection(url);
-	  DatabaseMetaData meta = con.getMetaData();
-	  Map<String,List<String>> tabelData= new HashMap<String,List<String>>();
-	  ResultSet rs = meta.getTables(null, null, "%", null);
-	  while (rs.next()) {
-		  String metaTableName= rs.getString(3);
-		  ResultSet rsColumns= meta.getColumns(null,null,metaTableName,null);
-		  List<String> columnList= new ArrayList<String>();
-		  while(rsColumns.next()){
-			  columnList.add(rsColumns.getString("COLUMN_NAME"));
-    		  }
-		  tabelData.put(metaTableName,columnList);
-		}
-	  
-	  
-	  
+  Connection con = DriverManager.getConnection(url);
+  DatabaseMetaData meta = con.getMetaData();
+  Map<String,List<String>> tabelData= new HashMap<String,List<String>>();
+  ResultSet rs = meta.getTables(null, null, "%", null);
+  while (rs.next()) {
+	  String metaTableName= rs.getString(3);
+	  ResultSet rsColumns= meta.getColumns(null,null,metaTableName,null);
+	  List<String> columnList= new ArrayList<String>();
+	  while(rsColumns.next()){
+		  columnList.add(rsColumns.getString("COLUMN_NAME"));
+		  }
+	  tabelData.put(metaTableName,columnList);
+	}
+  
+  
+  
 
-	  PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
-	  PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
-		  private static final long serialVersionUID = 1L;
-		  @ProcessElement
-		  public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
-			  String object= c.element();
-			  JSONParser parser = new JSONParser();
-			  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
-			  Map<String, Object> nodeMap = new HashMap<String, Object>();
-			  ObjectMapper mapper = new ObjectMapper();
-			  nodeMap=mapper.readValue(object, HashMap.class);
-			  Map<String,String> newMap = nodeMap.entrySet().stream()
-			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
-			  c.output(newMap);
-			  //newMap.put("tableName", options.getOutput()) ;
+  PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
+  PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
+	  private static final long serialVersionUID = 1L;
+	  @ProcessElement
+	  public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
+		  String object= c.element();
+		  JSONParser parser = new JSONParser();
+		  org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(object);
+		  Map<String, Object> nodeMap = new HashMap<String, Object>();
+		  ObjectMapper mapper = new ObjectMapper();
+		  nodeMap=mapper.readValue(object, HashMap.class);
+		  Map<String,String> newMap = nodeMap.entrySet().stream()
+		     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
+		  c.output(newMap);
+		  //newMap.put("tableName", options.getOutput()) ;
 		  }
   }));
   
   
   
-  values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData))); 
-	  /*private static final long serialVersionUID = 1L;
-	  @ProcessElement
-	  public void processElement(ProcessContext c) throws SQLException  {
-		  Map<String,String> element= c.element();
-		  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-		  map.putAll(element);
-		  LOG.info(map.toString());
-		  
-		  Connection con = DriverManager.getConnection(url);
-		  List<String> keyList= tabelData.get(options.getOutput());
-		  LOG.info(keyList.toString());
-		  String formattedQuery= getQuery(map.size()-1);
-		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, options.getOutput()));
-		  int count=0;
-		  for(String key:keyList) {
-	    		if(count<keyList.size())
-	    		query.setString(++count, map.get(key.replaceAll("_", "")));
-	    		LOG.info(map.get(key.replaceAll("_", "")));
-	    	}
-		  query.execute();
-		  
-	  }}));*/
-  
-  
-		/*
-		 * values.apply(JdbcIO.<Map<String,String>>write()
-		 * .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
-		 * .create("com.mysql.jdbc.Driver",
-		 * "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
-		 * ) .withStatement("insert into "+tableName+" values(?,?,?,?,?)")
-		 * .withPreparedStatementSetter(new StatementSetter(tabelData)));
-		 */
+	values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData))); 
     p.run().waitUntilFinish();
   }
   
   private static String getQuery( int size) {
 	  StringBuilder query = new StringBuilder();
 	  query.append("insert into %s values(");
-	  for(int count = 0; count<size;count++) {
-		  if(count ==size-1) {
-			  query.append("?");
-		  }
-		  else {
-			  query.append("?,");
-		  }
+  for(int count = 0; count<size;count++) {
+	  if(count ==size-1) {
+		  query.append("?");
 	  }
-	  query.append(")");
+	  else {
+		  query.append("?,");
+	  }
+  }
+  query.append(")");
 	  return query.toString();
 	  
-  }
+  	}
   }
