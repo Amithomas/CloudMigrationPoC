@@ -57,22 +57,31 @@ public class CloudSqlImport  {
   }
   
   static class CustomFn extends DoFn<Map<String,String>, String> {
-	    // access options from wihtin the ParDo
 	    ValueProvider<String> table;
 	    Map<String,List<String>> tabelData;
+	    Connection con=null;
 	    public CustomFn(ValueProvider<String> table,Map<String,List<String>> tabelData) {
 	        this.table = table;
 	        this.tabelData=tabelData;
 	    }
+	    private String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";	
+	    private Connection JdbcCreateConnection() throws SQLException {
+	    	Connection connection = DriverManager.getConnection(url);
+	    	return connection;
+	    }
+	    @Setup
+	    public void setup() throws SQLException {
+	    	con = JdbcCreateConnection();
+	    }
 	    @ProcessElement
 		  public void processElement(ProcessContext c) throws SQLException  {
 			  Map<String,String> element= c.element();
-			  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
+			  
 			  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 			  map.putAll(element);
 			  LOG.info(map.toString());
 			  
-			  Connection con = DriverManager.getConnection(url);
+			  
 			  List<String> keyList= tabelData.get(table.get());
 			  LOG.info(keyList.toString());
 			  String formattedQuery= getQuery(map.size());
