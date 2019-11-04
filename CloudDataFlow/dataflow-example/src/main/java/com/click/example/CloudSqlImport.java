@@ -62,15 +62,13 @@ public class CloudSqlImport  {
 	  Map<String,List<String>> dbMeta;
 	  String targetTable;
     private static final long serialVersionUID = 1L;
-    StatementSetter(Map<String,List<String>> tableData, String tableName){
+    StatementSetter(Map<String,List<String>> tableData){
     	dbMeta=tableData;
-    	targetTable=tableName;
-    	LOG.info(tableName);
     }
     public void setParameters(Map<String,String> element, PreparedStatement query) throws Exception
     {	LOG.info(targetTable);
     	LOG.info(dbMeta.toString());
-    	List<String> keyList= dbMeta.get("customer_details");
+    	List<String> keyList= dbMeta.get(element.get("tableName"));
     	LOG.info(keyList.toString());
     	Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     	map.putAll(element);
@@ -81,6 +79,7 @@ public class CloudSqlImport  {
     		query.setString(++count, map.get(key.replaceAll("_", "")));
     		LOG.info(key);
     	}
+    
     	LOG.info(query.toString());
     }
   }
@@ -134,16 +133,18 @@ public class CloudSqlImport  {
 	  nodeMap=mapper.readValue(object, HashMap.class);
 	  Map<String,String> newMap = nodeMap.entrySet().stream()
 			     .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
+	  newMap.put("tableName", options.getOutput());
          c.output(newMap);
       }
   }));
+ 
   
   values.apply(JdbcIO.<Map<String,String>>write()
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
-  .withStatement("insert into "+tableName+" values(?,?,?,?,?)")
-              .withPreparedStatementSetter(new StatementSetter(tabelData,tableName)));
+  .withStatement(String.format("insert into %s values(?,?,?,?,?)",options.getOutput()))
+              .withPreparedStatementSetter(new StatementSetter(tabelData)));
     p.run().waitUntilFinish();
   }
   
