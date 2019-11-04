@@ -137,13 +137,33 @@ public class CloudSqlImport  {
          newMap.put(tableName, options.getOutput()) ;
       }
   }));
+  values.apply("Jdbc Write", ParDo.of(new DoFn<Map<String,String>, String>() {
+	  private static final long serialVersionUID = 1L;
+	  @ProcessElement
+	  public void processElement(ProcessContext c) throws SQLException  {
+		  Map<String,String> element= c.element();
+		  Connection con = DriverManager.getConnection(url);
+		  List<String> keyList= tabelData.get("customer_details");
+		  PreparedStatement query =con.prepareStatement("insert into customer_details values(?,?,?,?,?)");
+		  int count=0;
+		  for(String key:keyList) {
+	    		if(count<keyList.size())
+	    		query.setString(++count, element.get(key.replaceAll("_", "")));
+	    		LOG.info(key);
+	    	}
+		  query.executeQuery();
+		  
+	  }}));
   
-  values.apply(JdbcIO.<Map<String,String>>write()
-          .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
-        		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
-          )
-  .withStatement("insert into "+tableName+" values(?,?,?,?,?)")
-              .withPreparedStatementSetter(new StatementSetter(tabelData)));
+  
+		/*
+		 * values.apply(JdbcIO.<Map<String,String>>write()
+		 * .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
+		 * .create("com.mysql.jdbc.Driver",
+		 * "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
+		 * ) .withStatement("insert into "+tableName+" values(?,?,?,?,?)")
+		 * .withPreparedStatementSetter(new StatementSetter(tabelData)));
+		 */
     p.run().waitUntilFinish();
   }
   
