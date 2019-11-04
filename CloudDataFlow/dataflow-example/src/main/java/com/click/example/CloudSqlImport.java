@@ -87,6 +87,7 @@ public class CloudSqlImport  {
 
   public static void main(String[] args) throws SQLException {
 	  String sourceBucket = "gs://triggerbucket-1/";
+	  PipelineOptionsFactory.register(TransformOptions.class);
 	  TransformOptions options = PipelineOptionsFactory.fromArgs(args).withValidation().as(TransformOptions.class);      
   Pipeline p = Pipeline.create(options);
   //String sourceFile=options.getInputFile();
@@ -141,7 +142,7 @@ public class CloudSqlImport  {
           .withDataSourceConfiguration(JdbcIO.DataSourceConfiguration
         		  .create("com.mysql.jdbc.Driver", "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false")
           )
-  .withStatement("insert into customer_details values(?,?,?,?,?)")
+  .withStatement("insert into "+tableName+" values(?,?,?,?,?)")
               .withPreparedStatementSetter(new StatementSetter(tabelData,tableName)));
     p.run().waitUntilFinish();
   }
