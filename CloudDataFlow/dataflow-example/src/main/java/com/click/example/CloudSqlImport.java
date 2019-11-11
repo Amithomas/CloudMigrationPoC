@@ -97,13 +97,14 @@ public class CloudSqlImport  {
     	con = JdbcCreateConnection();
     }
     @ProcessElement
-	  public void processElement(ProcessContext c) throws SQLException  {
+	  public void processElement(ProcessContext c)   {
 		  Map<String,String> element= c.element();
 		  
 		  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		  map.putAll(element);
 		  List<String> keyList= tabelData.get(table.get());
 		  String formattedQuery= getQuery(map.size());
+		  try {
 		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, table.get()));
 		  int count=0;
 		  for(String key:keyList) {
@@ -111,13 +112,13 @@ public class CloudSqlImport  {
 	    		query.setString(++count, map.get(key.replaceAll("_", "")));
 		    	}
 		  Integer i = query.executeUpdate();
-	        if (i > 0) {
+		  if (i > 0) {
 	            c.output(1);;
-	        } else {
-	            c.output(0);
 	        }
-			  
-			  
+		  } catch (SQLException e) {
+			  	c.output(0);
+				e.printStackTrace();
+			} 
 	    }
   }
 	    
