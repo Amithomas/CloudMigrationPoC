@@ -7,8 +7,7 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.io.TextIO;
-
-
+import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 
@@ -137,7 +136,18 @@ public class CloudSqlImport  {
   
   
   
-	values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData))); 
+	values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData)));
+	
+	p.apply("Update Job Statistics Table",Create.of(1)).apply(ParDo.of(new DoFn<Integer, Integer>() {
+
+		   @ProcessElement public void process(ProcessContext c) throws SQLException {
+			   String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
+			   Connection con = DriverManager.getConnection(url); 
+			   PreparedStatement query =con.prepareStatement("insert into adabas_job_statistics(?,?,?,?,?,?,?)");
+			   query.setString(1, "job test");
+			   query.execute();
+		   }
+		 }));
     p.run().waitUntilFinish();
   }
   
