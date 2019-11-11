@@ -102,18 +102,13 @@ public class CloudSqlImport  {
 		  
 		  Map<String, String> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 		  map.putAll(element);
-		  LOG.info(map.toString());
-		  
-		  
 		  List<String> keyList= tabelData.get(table.get());
-		  LOG.info(keyList.toString());
 		  String formattedQuery= getQuery(map.size());
 		  PreparedStatement query =con.prepareStatement(String.format(formattedQuery, table.get()));
 		  int count=0;
 		  for(String key:keyList) {
 	    		if(count<keyList.size())
 	    		query.setString(++count, map.get(key.replaceAll("_", "")));
-	    		LOG.info(map.get(key.replaceAll("_", "")));
 		    	}
 		  Integer i = query.executeUpdate();
 	        if (i > 0) {
