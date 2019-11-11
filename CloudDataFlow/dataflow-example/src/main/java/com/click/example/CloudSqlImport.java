@@ -137,11 +137,11 @@ public class CloudSqlImport  {
   
   
   
-  PCollection<String> stateValues=values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData)));
+  values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData)));
   
 	
   
-    p.run().waitUntilFinish();
+    
     q.apply("Update Job Statistics Table",Create.of(1)).apply(ParDo.of(new DoFn<Integer, Integer>() {
 
 		   @ProcessElement public void process(ProcessContext c) throws SQLException {
@@ -154,6 +154,8 @@ public class CloudSqlImport  {
 		 }));
     
     q.run().waitUntilFinish();
+    p.run().waitUntilFinish();
+    
   }
   
   private static String getQuery( int size) {
