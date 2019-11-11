@@ -7,10 +7,10 @@ import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.io.TextIO;
-import org.apache.beam.sdk.transforms.Create;
+import org.apache.beam.sdk.transforms.Combine;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
-
+import org.apache.beam.sdk.transforms.Sum;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -51,7 +51,7 @@ public class CloudSqlImport  {
 
   }
   
-  static class CustomFn extends DoFn<Map<String,String>, String> {
+  static class CustomFn extends DoFn<Map<String,String>, Integer> {
 	  private static final long serialVersionUID = 1L;
 	    ValueProvider<String> table;
 	    Map<String,List<String>> tabelData;
@@ -88,7 +88,13 @@ public class CloudSqlImport  {
 	    		query.setString(++count, map.get(key.replaceAll("_", "")));
 	    		LOG.info(map.get(key.replaceAll("_", "")));
 		    	}
-			  query.execute();
+		  Integer i = query.executeUpdate();
+	        if (i > 0) {
+	            c.output(1);;
+	        } else {
+	            c.output(0);
+	        }
+			  
 			  
 	    }
   }
@@ -101,7 +107,6 @@ public class CloudSqlImport  {
 	  
 	  ValueProvider<String> table = options.getOutput();
 	  Pipeline p = Pipeline.create(options);
-	  Pipeline q = Pipeline.create(options);
 	  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   Connection con = DriverManager.getConnection(url);
   DatabaseMetaData meta = con.getMetaData();
@@ -137,11 +142,22 @@ public class CloudSqlImport  {
   
   
   
-  values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData)));
+  PCollection<Integer>statusValues=values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData)));
+  PCollection<Integer> sum = statusValues.apply(Combine.globally( Sum.ofIntegers()));
+  sum.apply(ParDo.of(new DoFn<Integer, Integer>() {
+	  private static final long serialVersionUID = 1L;
+	   @ProcessElement public void process(ProcessContext c) throws SQLException {
+		   Integer count = c.element();
+		   LOG.info(count.toString());
+		   String url2 = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
+		   Connection con2 = DriverManager.getConnection(url2);
+		   PreparedStatement query =con2.prepareStatement("insert into adabas_job_statistics values(?)");
+		   query.setString(1, "test");
+	   }
+	 }));
+
+  
     p.run().waitUntilFinish();
-	   PreparedStatement query =con.prepareStatement("insert into adabas_job_statistics(?)");
-	   query.setString(1, table.get());
-	   query.execute();
     
   }
   
