@@ -153,6 +153,7 @@ public class CloudSqlImport  {
 		   Connection con2 = DriverManager.getConnection(url2);
 		   PreparedStatement query =con2.prepareStatement("insert into adabas_job_statistics values(?)");
 		   query.setString(1, "test");
+		   query.execute();
 	   }
 	 }));
 
