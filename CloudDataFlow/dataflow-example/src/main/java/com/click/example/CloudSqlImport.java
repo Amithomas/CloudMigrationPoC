@@ -101,6 +101,7 @@ public class CloudSqlImport  {
 	  
 	  ValueProvider<String> table = options.getOutput();
 	  Pipeline p = Pipeline.create(options);
+	  Pipeline q = Pipeline.create(options);
 	  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   Connection con = DriverManager.getConnection(url);
   DatabaseMetaData meta = con.getMetaData();
@@ -141,7 +142,6 @@ public class CloudSqlImport  {
 	
   
     p.run().waitUntilFinish();
-    Pipeline q = Pipeline.create(options);
     q.apply("Update Job Statistics Table",Create.of(1)).apply(ParDo.of(new DoFn<Integer, Integer>() {
 
 		   @ProcessElement public void process(ProcessContext c) throws SQLException {
