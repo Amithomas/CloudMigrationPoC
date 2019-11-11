@@ -51,12 +51,39 @@ public class CloudSqlImport  {
 
   }
   
-  static class CustomFn extends DoFn<Map<String,String>, Integer> {
+  static class CustomUpdateFn extends DoFn<Integer, Integer>{
+	  private static final long serialVersionUID = 1L; 
+	  ValueProvider<String> table;
+	  public CustomUpdateFn(ValueProvider<String> table) {
+	        this.table = table;
+	    }
+	  @ProcessElement 
+	  public void process(ProcessContext c) throws SQLException {
+		   Integer count = c.element();
+		   LOG.info(count.toString());
+		   String url2 = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
+		   Connection con2 = DriverManager.getConnection(url2);
+		   PreparedStatement query =con2.prepareStatement("insert into adabas_job_statistics values(?,?,?,?,?,?,?)");
+		   query.setString(1, "test");
+		   query.setString(2, table.get());
+		   query.setString(3, null);
+		   query.setString(4, null);
+		   query.setString(5, null);
+		   query.setString(6, null);
+		   query.setInt(7, count);
+		   query.execute();
+	   }
+	  
+  }
+  
+  
+  
+  static class CustomJdbcInsertFn extends DoFn<Map<String,String>, Integer> {
 	  private static final long serialVersionUID = 1L;
 	    ValueProvider<String> table;
 	    Map<String,List<String>> tabelData;
 	    Connection con=null;
-	    public CustomFn(ValueProvider<String> table,Map<String,List<String>> tabelData) {
+	    public CustomJdbcInsertFn(ValueProvider<String> table,Map<String,List<String>> tabelData) {
 	        this.table = table;
 	        this.tabelData=tabelData;
 	    }
@@ -122,10 +149,8 @@ public class CloudSqlImport  {
 	  tabelData.put(metaTableName,columnList);
 	}
   
-  
-  
-
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
+  
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
 	  private static final long serialVersionUID = 1L;
 	  @ProcessElement
@@ -141,24 +166,13 @@ public class CloudSqlImport  {
   }));
   
   
+  PCollection<Integer>statusValues=values.apply("Jdbc Write", ParDo.of(new CustomJdbcInsertFn(table,tabelData)));
   
-  PCollection<Integer>statusValues=values.apply("Jdbc Write", ParDo.of(new CustomFn(table,tabelData)));
-  PCollection<Integer> sum = statusValues.apply(Combine.globally( Sum.ofIntegers()));
-  sum.apply(ParDo.of(new DoFn<Integer, Integer>() {
-	  private static final long serialVersionUID = 1L;
-	   @ProcessElement public void process(ProcessContext c) throws SQLException {
-		   Integer count = c.element();
-		   LOG.info(count.toString());
-		   String url2 = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
-		   Connection con2 = DriverManager.getConnection(url2);
-		   PreparedStatement query =con2.prepareStatement("insert into adabas_job_statistics values(?)");
-		   query.setString(1, "test");
-		   query.execute();
-	   }
-	 }));
-
+  PCollection<Integer> sum = statusValues.apply("Get Inserted Record Count",Combine.globally( Sum.ofIntegers()));
   
-    p.run().waitUntilFinish();
+  sum.apply("Update Job Statistics Table",ParDo.of(new CustomUpdateFn(table))); 
+  
+  p.run().waitUntilFinish();
     
   }
   
