@@ -164,7 +164,7 @@ public class CloudSqlImport  {
   
   PCollection<Integer>statusValues=values.apply("Jdbc Write", ParDo.of(new CustomJdbcInsertFn(table,tabelData)));
   
-  PCollection<Integer> sum = statusValues.apply("Get Inserted Record Count",Combine.globally( Sum.ofIntegers()));
+  PCollection<Integer> sum = statusValues.apply("Get Inserted Record Count",Sum.integersGlobally());
   
   sum.apply("Update Job Statistics Table",ParDo.of(new CustomUpdateFn(table))); 
   
