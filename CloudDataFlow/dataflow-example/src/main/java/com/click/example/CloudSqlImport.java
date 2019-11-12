@@ -160,8 +160,8 @@ public class CloudSqlImport  {
 		  }
   }));
   
-  PCollection<Integer> recordCount = lineCount.apply("Get Total Record Count",Sum.integersGlobally());
-  final PCollectionView<Integer> recordCountSideInput =recordCount.apply("Computing Side Input",View.<Integer>asSingleton());
+  PCollection<Integer> recordCount = lineCount.apply("Computing Record Count",Sum.integersGlobally());
+  final PCollectionView<Integer> recordCountSideInput =recordCount.apply("Side Input",View.<Integer>asSingleton());
   
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
 	  private static final long serialVersionUID = 1L;
