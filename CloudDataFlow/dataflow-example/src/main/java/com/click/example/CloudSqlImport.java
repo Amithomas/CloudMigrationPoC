@@ -6,10 +6,14 @@ import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.io.TextIO;
+import org.apache.beam.sdk.transforms.Combine;
+import org.apache.beam.sdk.transforms.Count;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Sum;
+import org.apache.beam.sdk.transforms.View;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -53,12 +57,15 @@ public class CloudSqlImport  {
   static class CustomUpdateFn extends DoFn<Integer, Integer>{
 	  private static final long serialVersionUID = 1L; 
 	  ValueProvider<String> table;
-	  public CustomUpdateFn(ValueProvider<String> table) {
+	  PCollectionView<Integer> recordCountSideInput;
+	  public CustomUpdateFn(ValueProvider<String> table,PCollectionView<Integer> recordCountSideInput) {
 	        this.table = table;
+	        this.recordCountSideInput=recordCountSideInput;
 	    }
 	  @ProcessElement 
 	  public void process(ProcessContext c) throws SQLException {
 		   Integer count = c.element();
+		   Integer totalCount=c.sideInput(recordCountSideInput);
 		   LOG.info(count.toString());
 		   String url2 = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
 		   Connection con2 = DriverManager.getConnection(url2);
@@ -68,7 +75,7 @@ public class CloudSqlImport  {
 		   query.setString(3, null);
 		   query.setString(4, null);
 		   query.setString(5, null);
-		   query.setString(6, null);
+		   query.setInt(6, totalCount);
 		   query.setInt(7, count);
 		   query.execute();
 	   }
@@ -112,7 +119,7 @@ public class CloudSqlImport  {
 		    	}
 		  Integer i = query.executeUpdate();
 		  if (i > 0) {
-	            c.output(1);;
+	            c.output(1);
 	        }
 		  } catch (SQLException e) {
 			  	c.output(0);
@@ -145,6 +152,16 @@ public class CloudSqlImport  {
 	}
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
+  PCollection<Integer> lineCount= lines.apply("Get Total Record Count", ParDo.of(new DoFn<String, Integer>() {
+	  private static final long serialVersionUID = 1L;
+	  @ProcessElement
+	  public void processElement(ProcessContext c) {
+		  c.output(1);
+		  }
+  }));
+  
+  PCollection<Integer> recordCount = lineCount.apply("Get Total Record Count",Sum.integersGlobally());
+  final PCollectionView<Integer> recordCountSideInput =recordCount.apply(View.<Integer>asSingleton());
   
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
 	  private static final long serialVersionUID = 1L;
@@ -165,7 +182,7 @@ public class CloudSqlImport  {
   
   PCollection<Integer> sum = statusValues.apply("Get Inserted Record Count",Sum.integersGlobally());
   
-  sum.apply("Update Job Statistics Table",ParDo.of(new CustomUpdateFn(table))); 
+  sum.apply("Update Job Statistics",ParDo.of(new CustomUpdateFn(table,recordCountSideInput)).withSideInputs(recordCountSideInput)); 
   
   p.run().waitUntilFinish();
     
@@ -180,6 +197,8 @@ public class CloudSqlImport  {
 	  }
 	  else {
 		  query.append("?,");
+		  
+		  
 	  }
   }
   query.append(")");
