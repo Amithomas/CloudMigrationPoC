@@ -1,6 +1,7 @@
 package com.click.example;
 
 import org.apache.beam.sdk.Pipeline;
+import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
@@ -184,7 +185,16 @@ public class CloudSqlImport  {
   
   sum.apply("Update Job Statistics",ParDo.of(new CustomUpdateFn(table,recordCountSideInput)).withSideInputs(recordCountSideInput)); 
   
-  p.run().waitUntilFinish();
+  //p.run().waitUntilFinish();
+  
+  PipelineResult result = p.run();
+  try {
+      result.getState();
+      result.waitUntilFinish();
+  } catch (UnsupportedOperationException e) {
+  } catch (Exception e) {
+      e.printStackTrace();
+  }
     
   }
   
