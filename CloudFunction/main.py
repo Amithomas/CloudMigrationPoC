@@ -17,7 +17,7 @@ def intitate_data_flow(data, context):
   jobName=data['name']
   dbName=jobName.split(".")
   tmpLocation = 'gs://df-temp-1/temp/'
-  templatePath ='gs://df-templates-1/templateDFtest.json'
+  templatePath ='gs://df-templates-1/templateJobStatDF.json'
   fileLoc='gs://triggerbucket-1/'+jobName
 
   request_body = {
