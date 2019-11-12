@@ -78,7 +78,11 @@ public class CloudSqlImport  {
 		   query.setString(5, null);
 		   query.setInt(6, totalCount);
 		   query.setInt(7, count);
+		   try {
 		   query.execute();
+		   }catch (SQLException e) {
+				e.printStackTrace();
+			} 
 	   }
 	  
   }
