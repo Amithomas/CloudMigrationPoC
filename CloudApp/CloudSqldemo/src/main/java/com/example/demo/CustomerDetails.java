@@ -1,6 +1,8 @@
 package com.example.demo;
 
 
+import java.sql.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -27,6 +29,9 @@ public class CustomerDetails {
 	
 	@Column
 	private Integer regStatus;
+	
+	@Column
+	private Date regDate;
 	
 	
 
@@ -68,6 +73,14 @@ public class CustomerDetails {
 
 	public void setRegEmail(String regEmail) {
 		this.regEmail = regEmail;
+	}
+
+	public Date getRegDate() {
+		return regDate;
+	}
+
+	public void setRegDate(Date regDate) {
+		this.regDate = regDate;
 	}
 
 	
