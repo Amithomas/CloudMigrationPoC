@@ -162,7 +162,7 @@ public class CloudSqlImport  {
 		  }
 	  tabelData.put(metaTableName,columnList);
 	}
-  PCollection<String>jobStartTime=  p.apply("Stats Initializing",Create.of(1)).apply(ParDo.of(new DoFn<Integer, String>() {
+  PCollection<String>jobStartTime=  p.apply("Stats Initializing",Create.of(1)).apply("Recording initial stats",ParDo.of(new DoFn<Integer, String>() {
 	  private static final long serialVersionUID = 1L;
 	   @ProcessElement public void process(ProcessContext c) {
 		   java.util.Date dt = new java.util.Date();
@@ -196,6 +196,7 @@ public class CloudSqlImport  {
                     	Map<String,String> statsMap= new HashMap<String,String>();
                     	statsMap.put("recordCount", Rcount.toString());
                     	statsMap.put("startTime",Rtime);
+                    	c.output(statsMap);
                     }
                   })
               .withSideInputs(jobStartTimeSideInput));
