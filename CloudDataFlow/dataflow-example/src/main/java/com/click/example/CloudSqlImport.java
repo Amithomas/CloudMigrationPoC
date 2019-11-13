@@ -9,8 +9,7 @@ import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.io.TextIO;
-import org.apache.beam.sdk.transforms.Combine;
-import org.apache.beam.sdk.transforms.Count;
+import org.apache.beam.sdk.transforms.Create;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.Sum;
@@ -58,25 +57,29 @@ public class CloudSqlImport  {
   static class CustomUpdateFn extends DoFn<Integer, Integer>{
 	  private static final long serialVersionUID = 1L; 
 	  ValueProvider<String> table;
-	  PCollectionView<Integer> recordCountSideInput;
-	  public CustomUpdateFn(ValueProvider<String> table,PCollectionView<Integer> recordCountSideInput) {
+	  PCollectionView<Map<String,String>> statSideInput;
+	  public CustomUpdateFn(ValueProvider<String> table,PCollectionView<Map<String,String>> statSideInput) {
 	        this.table = table;
-	        this.recordCountSideInput=recordCountSideInput;
+	        this.statSideInput=statSideInput;
 	    }
 	  @ProcessElement 
 	  public void process(ProcessContext c) throws SQLException {
 		   Integer count = c.element();
-		   Integer totalCount=c.sideInput(recordCountSideInput);
+		   Map<String,String> stats =c.sideInput(statSideInput);
 		   LOG.info(count.toString());
+		   java.util.Date dt = new java.util.Date();
+		   java.text.SimpleDateFormat sdf = 
+				     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		   String endTime = sdf.format(dt);
 		   String url2 = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
 		   Connection con2 = DriverManager.getConnection(url2);
 		   PreparedStatement query =con2.prepareStatement("insert into adabas_job_statistics values(?,?,?,?,?,?,?)");
 		   query.setString(1, "test");
 		   query.setString(2, table.get());
-		   query.setString(3, null);
-		   query.setString(4, null);
-		   query.setString(5, null);
-		   query.setInt(6, totalCount);
+		   query.setString(3, "Done");
+		   query.setString(4, stats.get("startTime"));
+		   query.setString(5, endTime);
+		   query.setString(6, stats.get("recordCount"));
 		   query.setInt(7, count);
 		   try {
 		   query.execute();
@@ -144,6 +147,7 @@ public class CloudSqlImport  {
 	  
 	  ValueProvider<String> table = options.getOutput();
 	  Pipeline p = Pipeline.create(options);
+	  
 	  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
   Connection con = DriverManager.getConnection(url);
   DatabaseMetaData meta = con.getMetaData();
@@ -158,6 +162,18 @@ public class CloudSqlImport  {
 		  }
 	  tabelData.put(metaTableName,columnList);
 	}
+  PCollection<String>jobStartTime=  p.apply("Stats Initializing",Create.of(1)).apply(ParDo.of(new DoFn<Integer, String>() {
+	  private static final long serialVersionUID = 1L;
+	   @ProcessElement public void process(ProcessContext c) {
+		   java.util.Date dt = new java.util.Date();
+		   java.text.SimpleDateFormat sdf = 
+				     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		   String currentTime = sdf.format(dt);
+		   c.output(currentTime);
+
+	   }
+	 }));
+  final PCollectionView<String> jobStartTimeSideInput =jobStartTime.apply("Start Time Side Input",View.<String>asSingleton());
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
   PCollection<Integer> lineCount= lines.apply("Get Total Record Count", ParDo.of(new DoFn<String, Integer>() {
@@ -169,7 +185,24 @@ public class CloudSqlImport  {
   }));
   
   PCollection<Integer> recordCount = lineCount.apply("Computing Record Count",Sum.integersGlobally());
-  final PCollectionView<Integer> recordCountSideInput =recordCount.apply("Side Input",View.<Integer>asSingleton());
+ 
+  
+  PCollection<Map<String,String>> initialStats= recordCount.apply("Combining Stats",ParDo.of(new DoFn<Integer, Map<String,String>>() {
+       private static final long serialVersionUID = 1L;
+                    @ProcessElement
+                    public void process(ProcessContext c) {
+                    	Integer Rcount= c.element();
+                    	String Rtime = c.sideInput(jobStartTimeSideInput);
+                    	Map<String,String> statsMap= new HashMap<String,String>();
+                    	statsMap.put("recordCount", Rcount.toString());
+                    	statsMap.put("startTime",Rtime);
+                    }
+                  })
+              .withSideInputs(jobStartTimeSideInput));
+  
+  final PCollectionView<Map<String,String>> statSideInput =initialStats.apply("Stats Side Input",View.<Map<String,String>>asSingleton());
+  
+  
   
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
 	  private static final long serialVersionUID = 1L;
@@ -190,7 +223,7 @@ public class CloudSqlImport  {
   
   PCollection<Integer> sum = statusValues.apply("Get Inserted Record Count",Sum.integersGlobally());
   
-  sum.apply("Update Job Statistics",ParDo.of(new CustomUpdateFn(table,recordCountSideInput)).withSideInputs(recordCountSideInput)); 
+  sum.apply("Update Job Statistics",ParDo.of(new CustomUpdateFn(table,statSideInput)).withSideInputs(statSideInput)); 
   
   //p.run().waitUntilFinish();
   
