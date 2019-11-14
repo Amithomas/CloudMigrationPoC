@@ -247,7 +247,7 @@ public class CloudSqlImport  {
 	  java.util.Date dt = new java.util.Date();
 	   java.text.SimpleDateFormat sdf = 
 			     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	   sdf.setTimeZone(TimeZone.getTimeZone("UTC+5:30"));
+	   sdf.setTimeZone(TimeZone.getTimeZone("IST"));
 	   String currentTime = sdf.format(dt);
 	   return currentTime;
   }
