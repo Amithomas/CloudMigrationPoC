@@ -67,10 +67,7 @@ public class CloudSqlImport  {
 		   Integer count = c.element();
 		   Map<String,String> stats =c.sideInput(statSideInput);
 		   LOG.info(count.toString());
-		   java.util.Date dt = new java.util.Date();
-		   java.text.SimpleDateFormat sdf = 
-				     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		   String endTime = sdf.format(dt);
+		   String endTime = getCurrentDateTime();
 		   String url2 = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
 		   Connection con2 = DriverManager.getConnection(url2);
 		   PreparedStatement query =con2.prepareStatement("insert into adabas_job_statistics values(?,?,?,?,?,?,?)");
@@ -162,17 +159,7 @@ public class CloudSqlImport  {
 		  }
 	  tabelData.put(metaTableName,columnList);
 	}
-  PCollection<String>jobStartTime=  p.apply("Stats Initializing",Create.of(1)).apply("Recording initial stats",ParDo.of(new DoFn<Integer, String>() {
-	  private static final long serialVersionUID = 1L;
-	   @ProcessElement public void process(ProcessContext c) {
-		   java.util.Date dt = new java.util.Date();
-		   java.text.SimpleDateFormat sdf = 
-				     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		   String currentTime = sdf.format(dt);
-		   c.output(currentTime);
-
-	   }
-	 }));
+  PCollection<String>jobStartTime=  p.apply("Stats Initializing",Create.of(getCurrentDateTime()));
   final PCollectionView<String> jobStartTimeSideInput =jobStartTime.apply("Start Time Side Input",View.<String>asSingleton());
   
   PCollection<String> lines =p.apply("Read JSON text File", TextIO.read().from(options.getInputFile()));
@@ -256,4 +243,11 @@ public class CloudSqlImport  {
 	  return query.toString();
 	  
   	}
+  private static String getCurrentDateTime() {
+	  java.util.Date dt = new java.util.Date();
+	   java.text.SimpleDateFormat sdf = 
+			     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	   String currentTime = sdf.format(dt);
+	   return currentTime;
+  }
   }
