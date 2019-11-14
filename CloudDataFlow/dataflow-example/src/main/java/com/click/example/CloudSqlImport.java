@@ -67,10 +67,7 @@ public class CloudSqlImport  {
 		   Integer count = c.element();
 		   Map<String,String> stats =c.sideInput(statSideInput);
 		   LOG.info(count.toString());
-		   java.util.Date dt = new java.util.Date();
-		   java.text.SimpleDateFormat sdf = 
-				     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		   String endTime = sdf.format(dt);
+		   String endTime = getCurrentDateTime();
 		   String url2 = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
 		   Connection con2 = DriverManager.getConnection(url2);
 		   PreparedStatement query =con2.prepareStatement("insert into adabas_job_statistics values(?,?,?,?,?,?,?)");
@@ -250,6 +247,7 @@ public class CloudSqlImport  {
 	  java.util.Date dt = new java.util.Date();
 	   java.text.SimpleDateFormat sdf = 
 			     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	   sdf.setTimeZone(TimeZone.getTimeZone("UTC+5:30"));
 	   String currentTime = sdf.format(dt);
 	   return currentTime;
   }
