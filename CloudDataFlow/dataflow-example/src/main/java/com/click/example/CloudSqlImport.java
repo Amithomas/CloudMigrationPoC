@@ -67,6 +67,9 @@ public class CloudSqlImport  {
 		   Integer count = c.element();
 		   Map<String,String> stats =c.sideInput(statSideInput);
 		   LOG.info(count.toString());
+		   java.util.Date dt = new java.util.Date();
+		   java.text.SimpleDateFormat sdf = 
+				     new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		   String endTime = getCurrentDateTime();
 		   String url2 = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
 		   Connection con2 = DriverManager.getConnection(url2);
