@@ -36,7 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CloudSqlImport  {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CloudSqlImport.class);
-
+    private static final String URL = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
 	
 	
 		
@@ -66,8 +66,7 @@ public class CloudSqlImport  {
 		   Map<String,String> stats =c.sideInput(statSideInput);
 		   LOG.info(count.toString());
 		   String endTime = getCurrentDateTime();
-		   String url2 = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
-		   Connection con2 = DriverManager.getConnection(url2);
+		   Connection con2 = DriverManager.getConnection(URL);
 		   PreparedStatement query =con2.prepareStatement("insert into adabas_job_statistics values(?,?,?,?,?,?,?)");
 		   query.setString(1, "test");
 		   query.setString(2, table.get());
@@ -96,9 +95,8 @@ public class CloudSqlImport  {
 	        this.table = table;
 	        this.tabelData=tabelData;
 	    }
-	    private String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";	
     private Connection JdbcCreateConnection() throws SQLException {
-    	Connection connection = DriverManager.getConnection(url);
+    	Connection connection = DriverManager.getConnection(URL);
     	return connection;
     }
     @Setup
@@ -143,8 +141,7 @@ public class CloudSqlImport  {
 	  ValueProvider<String> table = options.getOutput();
 	  Pipeline p = Pipeline.create(options);
 	  
-	  String url = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
-  Connection con = DriverManager.getConnection(url);
+  Connection con = DriverManager.getConnection(URL);
   DatabaseMetaData meta = con.getMetaData();
   Map<String,List<String>> tabelData= new HashMap<String,List<String>>();
   ResultSet rs = meta.getTables(null, null, "%", null);
