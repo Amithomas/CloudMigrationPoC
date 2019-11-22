@@ -1,4 +1,4 @@
-package com.click.example;
+package com.equifax.sam.dataflow;
 
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 
-
-import org.json.simple.parser.ParseException;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -195,7 +193,7 @@ public class CloudSqlImport  {
   PCollection<Map<String,String>> values=lines.apply("Process JSON Object", ParDo.of(new DoFn<String, Map<String,String>>() {
 	  private static final long serialVersionUID = 1L;
 	  @ProcessElement
-	  public void processElement(ProcessContext c) throws ParseException, SQLException, JsonParseException, JsonMappingException, IOException {
+	  public void processElement(ProcessContext c) throws  JsonParseException, JsonMappingException, IOException {
 		  String object= c.element();
 		  Map<String, Object> nodeMap = new HashMap<String, Object>();
 		  ObjectMapper mapper = new ObjectMapper();
