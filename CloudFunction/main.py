@@ -19,7 +19,7 @@ def intitate_data_flow(data, context):
   name=data['name']
   dbName=name.split(".")
   ts = calendar.timegm(time.gmtime())
-  jobName = dbName[0] + "-" + ts
+  jobName = dbName[0] + "-" + str(ts)
   tmpLocation = 'gs://df-temp-1/temp/'
   templatePath ='gs://df-templates-1/templateJobStatDF.json'
   fileLoc='gs://triggerbucket-1/'+jobName
