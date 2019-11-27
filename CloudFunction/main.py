@@ -22,7 +22,7 @@ def intitate_data_flow(data, context):
   jobName = dbName[0] + "-" + str(ts)
   tmpLocation = 'gs://df-temp-1/temp/'
   templatePath ='gs://df-templates-1/templateJobStatDF.json'
-  fileLoc='gs://triggerbucket-1/'+jobName
+  fileLoc='gs://triggerbucket-1/'+name
 
   request_body = {
           "environment": {
