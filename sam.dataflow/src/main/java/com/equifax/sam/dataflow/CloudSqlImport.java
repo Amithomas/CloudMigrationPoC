@@ -36,7 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CloudSqlImport  {
 
 	private static final Logger LOG = LoggerFactory.getLogger(CloudSqlImport.class);
-    private static final String URL = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=snappy-meridian-255502:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
+    private static final String URL = "jdbc:mysql://google/cloudsqltestdb?cloudSqlInstance=pragmatic-braid-263313:us-central1:test-sql-instance&socketFactory=com.google.cloud.sql.mysql.SocketFactory&user=root&password=root&useSSL=false";
 	
 	
 		
