@@ -3,6 +3,8 @@ package com.equifax;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -18,7 +20,9 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.auth.appengine.AppEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.api.services.dataflow.model.CreateJobFromTemplateRequest;
 import com.google.api.services.dataflow.model.Job;
+import com.google.api.services.dataflow.model.RuntimeEnvironment;
 
 @WebServlet(
     name = "HelloAppEngine",
@@ -48,12 +52,21 @@ public class HelloAppEngine extends HttpServlet {
 	    Dataflow dataflowService = new Dataflow.Builder(httpTransport, jsonFactory, credential)
 	      .setApplicationName("Google Cloud Platform Sample")
 	      .build();
-	    String projectId = null;
-	    Job content = null;
-
+	    String projectId ="pragmatic-braid-263313";
+	    CreateJobFromTemplateRequest content = new CreateJobFromTemplateRequest();
+	    content.setGcsPath("gs://df-templates-1/templateDF.json");
+	    Map<String,String> parameters = new HashMap<String,String>();
+	    parameters.put("output", "customer_details");
+	    parameters.put("inputFile", "gs://df-trigger-bucket-1/customer_details.txt");
+	    RuntimeEnvironment environment= new RuntimeEnvironment();
+	    environment.setTempLocation("gs://df-temp-1/temp/");
+	    content.setEnvironment(environment);
+	    
+	    content.setParameters(parameters);
+	    Dataflow.Projects.Templates.Create dataflowRequest = dataflowService.projects().templates().create(projectId, content);
 	    // Add your code to assign values to desired fields of the 'job' object
 
-	    Dataflow.Projects.Jobs.Create dataflowRequest = dataflowService.projects().jobs().create(projectId, content);
+	    
 	    Job dataflowResponse = dataflowRequest.execute();
     response.setContentType("text/plain");
     response.setCharacterEncoding("UTF-8");
